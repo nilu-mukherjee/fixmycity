@@ -102,6 +102,26 @@ export const create = mutation({
   },
 })
 
+const statusValidator = v.union(
+  v.literal('received'),
+  v.literal('verified'),
+  v.literal('assigned'),
+  v.literal('in_progress'),
+  v.literal('resolved'),
+)
+
+/** Advances (or otherwise changes) a ticket's status — the admin console's core action. */
+export const updateStatus = mutation({
+  args: {
+    id: v.id('tickets'),
+    status: statusValidator,
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id, { status: args.status })
+    return await ctx.db.get(args.id)
+  },
+})
+
 export const list = query({
   args: {},
   handler: async (ctx) => {

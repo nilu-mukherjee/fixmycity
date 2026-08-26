@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 @import 'tailwindcss';
 @plugin '@tailwindcss/typography';
 
@@ -344,4 +344,71 @@ a {
     background-color: var(--background);
     color: var(--foreground);
   }
+}
+
+/* ---- Admin console (issue queue) — scoped tokens, doesn't touch the tokens above ---- */
+
+.admin {
+  --admin-ink: #191b1a;
+  --admin-ink-soft: #5b6157;
+  --admin-paper: #eef0ea;
+  --admin-panel: #f8f9f5;
+  --admin-line: #d6dacc;
+  --admin-accent: #c23b22;
+  --admin-accent-soft: #c23b221a;
+
+  --status-received: #7c8b99;
+  --status-verified: #3e7cb1;
+  --status-assigned: #7a5fa6;
+  --status-in_progress: #b4791e;
+  --status-resolved: #3f8f5c;
+
+  --severity-low: #6f9376;
+  --severity-medium: #c99a3e;
+  --severity-high: #c9622b;
+  --severity-emergency: var(--admin-accent);
+
+  font-family: 'Manrope', system-ui, sans-serif;
+  background: var(--admin-paper);
+  color: var(--admin-ink);
+}
+
+.dark .admin {
+  --admin-ink: #ece9e2;
+  --admin-ink-soft: #a3a99c;
+  --admin-paper: #14160f;
+  --admin-panel: #1b1e15;
+  --admin-line: #33362a;
+  --admin-accent: #e2694c;
+  --admin-accent-soft: #e2694c26;
+
+  --status-received: #94a3b0;
+  --status-verified: #6fa8d6;
+  --status-assigned: #a68bd6;
+  --status-in_progress: #dba24d;
+  --status-resolved: #6ac290;
+
+  --severity-low: #8fb997;
+  --severity-medium: #dbb75d;
+  --severity-high: #dd8354;
+}
+
+.admin .font-display {
+  font-family: 'Fraunces', Georgia, serif;
+}
+
+.admin .font-mono {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+}
+
+/* Emergency severity: a real hazard stripe, not decoration — the signature
+   element, reserved strictly for the one severity that means "act now." */
+.admin .severity-stripe--emergency {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    var(--severity-emergency),
+    var(--severity-emergency) 6px,
+    var(--admin-ink) 6px,
+    var(--admin-ink) 12px
+  );
 }
