@@ -361,7 +361,14 @@ function DetailPanel({ ticket, onClose }: { ticket: Doc<'tickets'>; onClose: () 
                 Location
               </p>
               <p className="font-mono text-xs">
-                {ticket.latitude.toFixed(5)}, {ticket.longitude.toFixed(5)}
+                <a
+                  href={`https://www.google.com/maps?q=${ticket.latitude},${ticket.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline decoration-dotted underline-offset-2 hover:decoration-solid"
+                >
+                  {ticket.latitude.toFixed(5)}, {ticket.longitude.toFixed(5)}
+                </a>
                 {ticket.accuracyMeters !== undefined && (
                   <span style={{ color: 'var(--admin-ink-soft)' }}> ±{Math.round(ticket.accuracyMeters)}m</span>
                 )}

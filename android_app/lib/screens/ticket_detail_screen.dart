@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../models/report.dart';
+import '../utils/maps.dart';
 import '../widgets/severity_chip.dart';
 import '../widgets/status_timeline.dart';
 import '../widgets/trust_score_card.dart';
@@ -86,6 +87,8 @@ class TicketDetailScreen extends StatelessWidget {
                   ? 'Accuracy unknown'
                   : '±${ticket.location.accuracyMeters!.toStringAsFixed(0)}m accuracy',
             ),
+            trailing: const Icon(Icons.open_in_new, size: 18),
+            onTap: () => openInMaps(ticket.location),
           ),
           const SizedBox(height: 4),
           TrustScoreCard(score: ticket.trustScore),

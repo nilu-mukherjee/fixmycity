@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../models/report.dart';
 import '../services/service_locator.dart';
+import '../utils/maps.dart';
 import '../widgets/trust_score_card.dart';
 import 'ticket_detail_screen.dart';
 
@@ -162,6 +163,8 @@ class _PresubmitScreenState extends State<PresubmitScreen> {
                   ? 'Accuracy unknown'
                   : '±${presubmit.location.accuracyMeters!.toStringAsFixed(0)}m accuracy',
             ),
+            trailing: const Icon(Icons.open_in_new, size: 18),
+            onTap: () => openInMaps(presubmit.location),
           ),
           const SizedBox(height: 16),
           TrustScoreCard(score: presubmit.trustScore),
