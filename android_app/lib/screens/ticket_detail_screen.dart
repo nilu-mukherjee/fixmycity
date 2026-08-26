@@ -19,7 +19,7 @@ class TicketDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(ticket.id)),
+      appBar: AppBar(title: Text(ticket.displayId)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

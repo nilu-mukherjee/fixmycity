@@ -1,6 +1,9 @@
 import { mutation, query } from './_generated/server'
 import { v } from 'convex/values'
 
+import type { GenericDatabaseWriter } from 'convex/server'
+import type { DataModel } from './_generated/dataModel'
+
 const categoryValidator = v.union(
   v.literal('pothole'),
   v.literal('garbage'),
@@ -56,6 +59,30 @@ export const findNearby = query({
   },
 })
 
+/**
+ * Hands out the next value for a named counter, creating it at 1 if it
+ * doesn't exist yet. Safe under concurrent mutations — Convex serializes
+ * mutations and retries on conflicting reads, and every caller here both
+ * reads and writes the same counter doc, so two concurrent calls can't
+ * observe (and hand out) the same value.
+ */
+async function nextCounterValue(
+  ctx: { db: GenericDatabaseWriter<DataModel> },
+  name: string,
+): Promise<number> {
+  const existing = await ctx.db
+    .query('counters')
+    .withIndex('by_name', (q) => q.eq('name', name))
+    .unique()
+  if (!existing) {
+    await ctx.db.insert('counters', { name, value: 1 })
+    return 1
+  }
+  const next = existing.value + 1
+  await ctx.db.patch(existing._id, { value: next })
+  return next
+}
+
 export const create = mutation({
   args: {
     photoGcsObjectName: v.string(),
@@ -70,8 +97,10 @@ export const create = mutation({
     trustScore: trustScoreValidator,
   },
   handler: async (ctx, args) => {
+    const ticketNumber = await nextCounterValue(ctx, 'ticketNumber')
     const id = await ctx.db.insert('tickets', {
       ...args,
+      ticketNumber,
       status: 'received',
     })
     return await ctx.db.get(id)

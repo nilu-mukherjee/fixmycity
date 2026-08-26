@@ -118,7 +118,7 @@ class _TicketTile extends StatelessWidget {
             MaterialPageRoute(builder: (_) => TicketDetailScreen(ticket: ticket)),
           );
         },
-        title: Text(ticket.category.label),
+        title: Text('${ticket.displayId} · ${ticket.category.label}'),
         subtitle: Text(
           '${ticket.status.label} · ${ticket.department}\n'
           '${DateFormat.yMMMd().format(ticket.createdAt)} · '

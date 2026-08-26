@@ -55,6 +55,10 @@ function nextStatus(status: Status): Status | null {
   return i === -1 || i === STATUS_PIPELINE.length - 1 ? null : STATUS_PIPELINE[i + 1]
 }
 
+function formatTicketId(ticketNumber: number): string {
+  return `FMC${ticketNumber.toString().padStart(3, '0')}`
+}
+
 function relativeTime(creationTime: number): string {
   const ms = Date.now() - creationTime
   const mins = Math.round(ms / 60_000)
@@ -221,6 +225,9 @@ function TicketRow({ ticket, onClick }: { ticket: Doc<'tickets'>; onClick: () =>
         />
         <div className="min-w-0 flex-1 py-0.5">
           <div className="flex items-baseline gap-2">
+            <span className="font-mono text-xs" style={{ color: 'var(--admin-ink-soft)' }}>
+              {formatTicketId(ticket.ticketNumber)}
+            </span>
             <span className="font-medium">{CATEGORY_LABEL[ticket.category]}</span>
             <span className="font-mono text-xs" style={{ color: 'var(--admin-ink-soft)' }}>
               {relativeTime(ticket._creationTime)}
@@ -308,7 +315,7 @@ function DetailPanel({ ticket, onClose }: { ticket: Doc<'tickets'>; onClose: () 
         <div className="flex items-start justify-between border-b p-6" style={{ borderColor: 'var(--admin-line)' }}>
           <div>
             <p className="font-mono text-xs" style={{ color: 'var(--admin-ink-soft)' }}>
-              {ticket._id}
+              {formatTicketId(ticket.ticketNumber)}
             </p>
             <h2 className="font-display text-2xl font-semibold">{CATEGORY_LABEL[ticket.category]}</h2>
           </div>

@@ -12,6 +12,10 @@ export default defineSchema({
     completed: v.boolean(),
   }),
   tickets: defineTable({
+    // Human-facing sequential id (displayed as "FMC001", "FMC002", ...) —
+    // separate from Convex's own opaque `_id`, which isn't meant for people
+    // to read/type.
+    ticketNumber: v.number(),
     photoGcsObjectName: v.string(),
     category: v.union(
       v.literal('pothole'),
@@ -99,4 +103,11 @@ export default defineSchema({
     nearbyDuplicateCount: v.optional(v.number()),
     errorMessage: v.optional(v.string()),
   }),
+  // Single-row counters keyed by `name`, used to hand out sequential
+  // ticket numbers atomically (Convex mutations are serialized, so
+  // read-then-patch here can't race).
+  counters: defineTable({
+    name: v.string(),
+    value: v.number(),
+  }).index('by_name', ['name']),
 })

@@ -217,6 +217,7 @@ class PresubmitResult {
 class Ticket {
   Ticket({
     required this.id,
+    required this.ticketNumber,
     required this.photoPath,
     required this.photoGcsObjectName,
     required this.category,
@@ -229,6 +230,10 @@ class Ticket {
   });
 
   final String id;
+
+  /// Human-facing sequential id — display as [displayId] ("FMC001"), not
+  /// this raw number.
+  final int ticketNumber;
   final String photoPath;
 
   /// The GCS object backing this ticket's photo (`reports/{draftId}.jpg`) —
@@ -244,6 +249,8 @@ class Ticket {
   final DateTime createdAt;
 
   String get department => category.department;
+
+  String get displayId => 'FMC${ticketNumber.toString().padLeft(3, '0')}';
 
   /// Public read URL for [photoGcsObjectName] (the bucket grants `allUsers`
   /// `objectViewer` — see src/gcs/url.ts on the backend for the same URL
@@ -264,6 +271,7 @@ class Ticket {
   }) {
     return Ticket(
       id: json['_id'] as String,
+      ticketNumber: json['ticketNumber'] as int,
       photoPath: localPhotoPath ?? '',
       photoGcsObjectName: json['photoGcsObjectName'] as String,
       category: IssueCategory.fromApi(json['category'] as String),

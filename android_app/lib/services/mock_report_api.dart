@@ -29,9 +29,12 @@ class MockReportApi implements ReportApi {
 
   void _seedSampleTickets() {
     final now = DateTime.now();
+    final n1 = _nextId++;
+    final n2 = _nextId++;
     _tickets.addAll([
       Ticket(
-        id: _issueId(),
+        id: _issueId(n1),
+        ticketNumber: n1,
         photoPath: '',
         photoGcsObjectName: '',
         category: IssueCategory.pothole,
@@ -52,7 +55,8 @@ class MockReportApi implements ReportApi {
         createdAt: now.subtract(const Duration(hours: 6)),
       ),
       Ticket(
-        id: _issueId(),
+        id: _issueId(n2),
+        ticketNumber: n2,
         photoPath: '',
         photoGcsObjectName: '',
         category: IssueCategory.garbage,
@@ -75,7 +79,7 @@ class MockReportApi implements ReportApi {
     ]);
   }
 
-  String _issueId() => 'FMC-${(1000 + _nextId++)}';
+  String _issueId(int n) => 'FMC-${1000 + n}';
 
   @override
   Future<PresubmitResult> classifyReport({
@@ -109,8 +113,10 @@ class MockReportApi implements ReportApi {
   Future<Ticket> createTicket(PresubmitResult presubmit) async {
     await Future.delayed(const Duration(milliseconds: 400));
 
+    final n = _nextId++;
     final ticket = Ticket(
-      id: _issueId(),
+      id: _issueId(n),
+      ticketNumber: n,
       photoPath: presubmit.photoPath,
       photoGcsObjectName: '',
       category: presubmit.category,
