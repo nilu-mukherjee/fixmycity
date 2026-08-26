@@ -75,6 +75,13 @@ function formatTicketId(ticketNumber: number): string {
   return `FMC${ticketNumber.toString().padStart(3, '0')}`
 }
 
+function formatDate(creationTime: number): string {
+  return new Date(creationTime).toLocaleString(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  })
+}
+
 function relativeTime(creationTime: number): string {
   const ms = Date.now() - creationTime
   const mins = Math.round(ms / 60_000)
@@ -82,6 +89,38 @@ function relativeTime(creationTime: number): string {
   const hours = Math.round(mins / 60)
   if (hours < 24) return `${hours}h ago`
   return `${Math.round(hours / 24)}d ago`
+}
+
+interface MonthOverMonth {
+  /** null when there's nothing to compare against (no reports last month). */
+  pct: number | null
+  /** True when last month had zero reports but this month has some. */
+  isNew: boolean
+}
+
+/**
+ * Change in report count, this calendar month vs last, for one severity.
+ * For a civic-issue tracker, fewer reports is the good direction — so the
+ * caller should render a negative pct as "good" (green), not the usual
+ * business-KPI convention of "up = good".
+ */
+function monthOverMonth(tickets: Array<Doc<'tickets'>>, severity: Severity): MonthOverMonth {
+  const now = new Date()
+  const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime()
+  const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).getTime()
+
+  let thisMonth = 0
+  let lastMonth = 0
+  for (const t of tickets) {
+    if (t.severity !== severity) continue
+    if (t._creationTime >= thisMonthStart) thisMonth++
+    else if (t._creationTime >= lastMonthStart) lastMonth++
+  }
+
+  if (lastMonth === 0) {
+    return { pct: null, isNew: thisMonth > 0 }
+  }
+  return { pct: Math.round(((thisMonth - lastMonth) / lastMonth) * 100), isNew: false }
 }
 
 function trustTotal(score: Doc<'tickets'>['trustScore']): number {
@@ -149,92 +188,136 @@ function AdminConsole() {
     <div className={`admin flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900 ${isDark ? 'dark' : ''}`}>
       <SidebarRail />
       <div className="flex flex-1 flex-col overflow-y-auto">
-      <header className="sticky top-0 z-30 border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-        <div className="mx-auto flex max-w-(--breakpoint-2xl) flex-wrap items-center justify-between gap-3 px-4 py-4 md:px-6">
-          <div className="flex items-center gap-3">
-            <img src="/favicon.png" alt="" className="size-9 shrink-0 rounded-lg" />
-            <div>
-              <p className="text-theme-xs font-medium tracking-wide text-gray-400 uppercase dark:text-gray-500">
-                FixMyCity
+        <Header
+          openCount={openCount}
+          totalCount={tickets.length}
+          isDark={isDark}
+          toggleDark={toggleDark}
+        />
+        <main className="mx-auto max-w-(--breakpoint-2xl) p-4 md:p-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 xl:grid-cols-4">
+            {SEVERITY_ORDER.map((s) => {
+              const momChange = monthOverMonth(tickets, s)
+              return (
+                <div
+                  key={s}
+                  className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]"
+                >
+                  <p className="text-theme-sm text-gray-500 dark:text-gray-400">
+                    {SEVERITY_LABEL[s]}
+                  </p>
+                  <div className="mt-3 flex items-end justify-between">
+                    <div>
+                      <h4 className="text-2xl font-bold text-gray-800 dark:text-white/90">
+                        {tickets.filter((t) => t.severity === s).length}
+                      </h4>
+                    </div>
+                    <MonthOverMonthBadge change={momChange} />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          <div className="mb-5 flex flex-wrap gap-2">
+            {STATUS_PIPELINE.map((s) => (
+              <FilterChip
+                key={s}
+                active={statusFilter.has(s)}
+                label={STATUS_LABEL[s]}
+                onClick={() => toggle(statusFilter, s, setStatusFilter)}
+              />
+            ))}
+            <span className="mx-1 w-px bg-gray-200 dark:bg-gray-800" />
+            {SEVERITY_ORDER.map((s) => (
+              <FilterChip
+                key={s}
+                active={severityFilter.has(s)}
+                label={SEVERITY_LABEL[s]}
+                onClick={() => toggle(severityFilter, s, setSeverityFilter)}
+              />
+            ))}
+          </div>
+
+          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+            {ticketsQuery.isLoading ? (
+              <p className="text-theme-sm py-16 text-center text-gray-500 dark:text-gray-400">
+                Loading queue…
               </p>
-              <h1 className="text-lg font-semibold text-gray-800 dark:text-white/90">Issue Queue</h1>
-            </div>
+            ) : filtered.length === 0 ? (
+              <p className="text-theme-sm py-16 text-center text-gray-500 dark:text-gray-400">
+                No issues match these filters.
+              </p>
+            ) : (
+              <div className="w-full overflow-x-auto">
+                <table className="min-w-full text-left">
+                  <thead>
+                    <tr className="border-b border-gray-100 dark:border-gray-800">
+                      <Th>ID</Th>
+                      <Th>Issue</Th>
+                      <Th>Severity</Th>
+                      <Th>Status</Th>
+                      <Th>Department</Th>
+                      <Th>Trust</Th>
+                      <Th>Reported</Th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.map((t) => (
+                      <TicketRow key={t._id} ticket={t} onClick={() => setSelectedId(t._id)} />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
-          <div className="flex items-center gap-4">
-            <p className="text-theme-sm text-gray-500 dark:text-gray-400">
-              <span className="font-semibold text-gray-800 dark:text-white/90">{openCount}</span>{' '}
-              open of {tickets.length}
-            </p>
-            <button
-              type="button"
-              onClick={toggleDark}
-              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:border-gray-800 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
-            >
-              {isDark ? <SunIcon /> : <MoonIcon />}
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-(--breakpoint-2xl) p-4 md:p-6">
-        <div className="mb-5 flex flex-wrap gap-2">
-          {STATUS_PIPELINE.map((s) => (
-            <FilterChip
-              key={s}
-              active={statusFilter.has(s)}
-              label={STATUS_LABEL[s]}
-              onClick={() => toggle(statusFilter, s, setStatusFilter)}
-            />
-          ))}
-          <span className="mx-1 w-px bg-gray-200 dark:bg-gray-800" />
-          {SEVERITY_ORDER.map((s) => (
-            <FilterChip
-              key={s}
-              active={severityFilter.has(s)}
-              label={SEVERITY_LABEL[s]}
-              onClick={() => toggle(severityFilter, s, setSeverityFilter)}
-            />
-          ))}
-        </div>
-
-        <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
-          {ticketsQuery.isLoading ? (
-            <p className="text-theme-sm py-16 text-center text-gray-500 dark:text-gray-400">
-              Loading queue…
-            </p>
-          ) : filtered.length === 0 ? (
-            <p className="text-theme-sm py-16 text-center text-gray-500 dark:text-gray-400">
-              No issues match these filters.
-            </p>
-          ) : (
-            <div className="w-full overflow-x-auto">
-              <table className="min-w-full text-left">
-                <thead>
-                  <tr className="border-b border-gray-100 dark:border-gray-800">
-                    <Th>ID</Th>
-                    <Th>Issue</Th>
-                    <Th>Severity</Th>
-                    <Th>Status</Th>
-                    <Th>Department</Th>
-                    <Th>Trust</Th>
-                    <Th>Reported</Th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((t) => (
-                    <TicketRow key={t._id} ticket={t} onClick={() => setSelectedId(t._id)} />
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </main>
+        </main>
       </div>
 
       {selected && <DetailPanel ticket={selected} onClose={() => setSelectedId(null)} />}
     </div>
+  )
+}
+
+function Header({
+  openCount,
+  totalCount,
+  isDark,
+  toggleDark,
+}: {
+  openCount: number
+  totalCount: number
+  isDark: boolean
+  toggleDark: () => void
+}) {
+  return (
+    <header className="sticky top-0 z-30 border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+      <div className="mx-auto flex max-w-(--breakpoint-2xl) flex-wrap items-center justify-between gap-3 px-4 py-4 md:px-6">
+        <div className="flex items-center gap-3">
+          <img src="/favicon.png" alt="" className="size-9 shrink-0 rounded-lg" />
+          <div>
+            <p className="text-theme-xs font-medium tracking-wide text-gray-400 uppercase dark:text-gray-500">
+              FixMyCity
+            </p>
+            <h1 className="text-lg font-semibold text-gray-800 dark:text-white/90">Issue Queue</h1>
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
+          <p className="text-theme-sm text-gray-500 dark:text-gray-400">
+            <span className="font-semibold text-gray-800 dark:text-white/90">{openCount}</span>{' '}
+            open of {totalCount}
+          </p>
+          <button
+            type="button"
+            onClick={toggleDark}
+            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:border-gray-800 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
+          >
+            {isDark ? <SunIcon /> : <MoonIcon />}
+          </button>
+        </div>
+      </div>
+    </header>
   )
 }
 
@@ -306,11 +389,10 @@ function RailIcon({
         type="button"
         disabled={!active}
         aria-label={label}
-        className={`flex h-11 w-11 items-center justify-center rounded-lg transition-colors ${
-          active
+        className={`flex h-11 w-11 items-center justify-center rounded-lg transition-colors ${active
             ? 'bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-400'
             : 'cursor-not-allowed text-gray-400 dark:text-gray-600'
-        }`}
+          }`}
       >
         <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
           {children}
@@ -346,14 +428,52 @@ function FilterChip({
     <button
       type="button"
       onClick={onClick}
-      className={`text-theme-sm inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 font-medium transition-colors ${
-        active
+      className={`text-theme-sm inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 font-medium transition-colors ${active
           ? 'border-brand-500 bg-brand-50 text-brand-700 dark:border-brand-500 dark:bg-brand-500/15 dark:text-brand-400'
           : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50 dark:border-gray-800 dark:bg-white/[0.03] dark:text-gray-400 dark:hover:bg-white/5'
-      }`}
+        }`}
     >
       {label}
     </button>
+  )
+}
+
+/**
+ * Fewer reports than last month is the good direction for a civic-issue
+ * tracker, so a negative pct renders green and a positive one renders red
+ * — the reverse of the usual "up = good" business-KPI convention.
+ */
+function MonthOverMonthBadge({ change }: { change: MonthOverMonth }) {
+  if (change.isNew) {
+    return (
+      <div className="flex items-center gap-1">
+        <span className="text-theme-xs rounded-full bg-gray-100 px-2 py-0.5 font-medium text-gray-600 dark:bg-white/5 dark:text-gray-400">
+          New
+        </span>
+        <span className="text-theme-xs text-gray-500 dark:text-gray-400">this month</span>
+      </div>
+    )
+  }
+  if (change.pct === null) {
+    return <span className="text-theme-xs text-gray-400 dark:text-gray-500">No data last month</span>
+  }
+
+  const isIncrease = change.pct > 0
+  const tone =
+    change.pct === 0
+      ? 'bg-gray-100 text-gray-600 dark:bg-white/5 dark:text-gray-400'
+      : isIncrease
+        ? 'bg-error-50 text-error-600 dark:bg-error-500/15 dark:text-error-500'
+        : 'bg-success-50 text-success-600 dark:bg-success-500/15 dark:text-success-500'
+
+  return (
+    <div className="flex items-center gap-1">
+      <span className={`text-theme-xs rounded-full px-2 py-0.5 font-medium ${tone}`}>
+        {change.pct > 0 ? '+' : ''}
+        {change.pct}%
+      </span>
+      <span className="text-theme-xs text-gray-500 dark:text-gray-400">Vs last month</span>
+    </div>
   )
 }
 
@@ -488,6 +608,10 @@ function DetailPanel({ ticket, onClose }: { ticket: Doc<'tickets'>; onClose: () 
             <Badge tone={SEVERITY_BADGE[ticket.severity]}>{SEVERITY_LABEL[ticket.severity]}</Badge>
             <Badge tone={STATUS_BADGE[ticket.status]}>{STATUS_LABEL[ticket.status]}</Badge>
           </div>
+
+          <p className="text-theme-xs text-gray-400 dark:text-gray-500">
+            Reported {formatDate(ticket._creationTime)}
+          </p>
 
           <img
             src={getPublicUrl(ticket.photoGcsObjectName)}
