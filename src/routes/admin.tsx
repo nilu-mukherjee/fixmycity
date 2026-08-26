@@ -98,13 +98,16 @@ function AdminConsole() {
     <div className="admin min-h-screen">
       <header className="border-b px-6 py-5 sm:px-10" style={{ borderColor: 'var(--admin-line)' }}>
         <div className="mx-auto flex max-w-6xl flex-wrap items-baseline justify-between gap-3">
-          <div>
-            <p className="font-mono text-[0.68rem] tracking-[0.14em] uppercase" style={{ color: 'var(--admin-ink-soft)' }}>
-              FixMyCity — Admin
-            </p>
-            <h1 className="font-display text-3xl font-semibold" style={{ color: 'var(--admin-ink)' }}>
-              Issue Queue
-            </h1>
+          <div className="flex items-center gap-3">
+            <img src="/favicon.png" alt="" className="size-9 shrink-0" />
+            <div>
+              <p className="font-mono text-[0.68rem] tracking-[0.14em] uppercase" style={{ color: 'var(--admin-ink-soft)' }}>
+                FixMyCity — Admin
+              </p>
+              <h1 className="font-display text-3xl font-semibold" style={{ color: 'var(--admin-ink)' }}>
+                Issue Queue
+              </h1>
+            </div>
           </div>
           <p className="font-mono text-sm" style={{ color: 'var(--admin-ink-soft)' }}>
             <span className="font-semibold" style={{ color: 'var(--admin-ink)' }}>

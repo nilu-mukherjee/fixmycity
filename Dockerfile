@@ -18,7 +18,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
 COPY --from=builder /app/dist ./dist
-COPY instrument.server.mjs ./
+COPY instrument.server.mjs server-entry.mjs ./
 
 EXPOSE 8080
 CMD ["npm", "run", "start"]

@@ -39,7 +39,16 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('FixMyCity')),
+      appBar: AppBar(
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset('assets/images/icon.png', width: 28, height: 28),
+            const SizedBox(width: 10),
+            const Text('FixMyCity'),
+          ],
+        ),
+      ),
       body: RefreshIndicator(
         onRefresh: () async => _refresh(),
         child: FutureBuilder<List<Ticket>>(

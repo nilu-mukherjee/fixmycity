@@ -13,7 +13,7 @@
     "lint": "eslint",
     "format": "prettier --write . && eslint --fix",
     "check": "prettier --check .",
-    "start": "NODE_OPTIONS=\"--import ./instrument.server.mjs\" srvx dist/server/server.js --prod",
+    "start": "NODE_OPTIONS=\"--import ./instrument.server.mjs\" srvx server-entry.mjs --prod",
     "post-cta-init": "npx -y create-db@latest --user-agent tanstack/tsrouter",
     "db:generate": "dotenv -e .env.local -- prisma generate",
     "db:push": "dotenv -e .env.local -- prisma db push",
