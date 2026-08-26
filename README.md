@@ -1,442 +1,101 @@
-Welcome to your new TanStack Start app!
+# FixMyCity AI
 
-# Getting Started
+An AI agent that turns citizen complaints — a photo, a location, an urgency note — into verified, prioritized, routed civic repair tickets.
 
-To run this application:
+Citizens report a pothole, an overflowing bin, a broken streetlight, or similar from a **Flutter mobile app**. A **Genkit** flow on this repo's backend runs the report through Gemini Vision, decides for itself whether to check for duplicate reports nearby (a real tool call, not a hard-coded step), estimates severity in light of what it finds, and returns an editable "presubmit" ticket for the citizen to approve. Once approved, the ticket lands in **Convex** and is visible on the citizen's status page and (eventually) an admin dashboard.
 
-```bash
-npm install
-npm run dev
-```
-
-# Building For Production
-
-To build this application for production:
-
-```bash
-npm run build
-```
-
-## Styling
-
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
-
-### Removing Tailwind CSS
-
-If you prefer not to use Tailwind CSS:
-
-1. Remove the demo pages in `src/routes/demo/`
-2. Replace the Tailwind import in `src/styles.css` with your own styles
-3. Remove `tailwindcss()` from the plugins array in `vite.config.ts`
-4. Remove `@tailwindcss/vite` and `tailwindcss` from `package.json`
-
-## Linting & Formatting
-
-
-This project uses [eslint](https://eslint.org/) and [prettier](https://prettier.io/) for linting and formatting. Eslint is configured using [tanstack/eslint-config](https://tanstack.com/config/latest/docs/eslint). The following scripts are available:
-
-```bash
-npm run lint
-npm run format
-npm run check
-```
-
-
-## Setting up Convex
-
-- Set the `VITE_CONVEX_URL` and `CONVEX_DEPLOYMENT` environment variables in your `.env.local`. (Or run `npx -y convex init` to set them automatically.)
-- Run `npx -y convex dev` to start the Convex server.
-
-
-# TanStack Chat Application
-
-Am example chat application built with TanStack Start, TanStack Store, and Claude AI.
-
-## .env Updates
-
-```env
-ANTHROPIC_API_KEY=your_anthropic_api_key
-```
-
-## ✨ Features
-
-### AI Capabilities
-- 🤖 Powered by Claude 3.5 Sonnet 
-- 📝 Rich markdown formatting with syntax highlighting
-- 🎯 Customizable system prompts for tailored AI behavior
-- 🔄 Real-time message updates and streaming responses (coming soon)
-
-### User Experience
-- 🎨 Modern UI with Tailwind CSS and Lucide icons
-- 🔍 Conversation management and history
-- 🔐 Secure API key management
-- 📋 Markdown rendering with code highlighting
-
-### Technical Features
-- 📦 Centralized state management with TanStack Store
-- 🔌 Extensible architecture for multiple AI providers
-- 🛠️ TypeScript for type safety
+Built for the [All Things Agentic Hackathon](https://allthingsagentichackathon.devpost.com/).
 
 ## Architecture
 
-### Tech Stack
-- **Frontend Framework**: TanStack Start
-- **Routing**: TanStack Router
-- **State Management**: TanStack Store
-- **Styling**: Tailwind CSS
-- **AI Integration**: Anthropic's Claude API
+```
+android_app/           Flutter citizen app (separate codebase, Dart)
+  lib/services/         HttpReportApi — talks to the backend below over HTTP
+  lib/screens/           Capture → AI presubmit review → ticket status
 
-# Paraglide i18n
+src/                   TanStack Start web app: admin backend + API
+  genkit/report-flow.ts  The agent: Gemini Vision + findNearbyReports tool
+  orpc/router/reports.ts oRPC procedures exposed at /api/rpc and /api (OpenAPI)
 
-This add-on wires up ParaglideJS for localized routing and message formatting.
+convex/                 Data + file storage
+  schema.ts              tickets table
+  tickets.ts              upload URL, duplicate lookup, CRUD
+```
 
-- Messages live in `project.inlang/messages`.
-- URLs are localized through the Paraglide Vite plugin and router `rewrite` hooks.
-- Run the dev server or build to regenerate the `src/paraglide` outputs.
+Pipeline: citizen report → Genkit flow → Gemini Vision classification → the model itself calls a `findNearbyReports` tool to check for duplicates → severity/description informed by that result → deterministic trust score + department routing (mocked, no real municipal integration) → presubmit shown to citizen for edits → approve → ticket created in Convex.
 
+### Why this stack
 
-## Setting up Better Auth
+- **Convex** for data + file storage — reactive queries mean the citizen status page and admin dashboard update live with no polling, and built-in file storage handles photo uploads without a separate GCS/S3 setup.
+- **Genkit** for the agent flow, calling **Gemini** (`gemini-3.6-flash`) — deployed as a container on **Cloud Run** (see Deployment below).
+- Trust score (image clarity, GPS accuracy, corroborating nearby reports, recency) is computed deterministically in code, not left to the LLM, so the scoring rubric stays auditable.
 
-1. Generate and set the `BETTER_AUTH_SECRET` environment variable in your `.env.local`:
+## Prerequisites
 
+- Node.js 20+, npm
+- A [Convex](https://convex.dev) deployment
+- A [Gemini API key](https://aistudio.google.com/apikey) with billing/prepay enabled (the free tier's request quota is easy to exhaust during development)
+- [Flutter](https://flutter.dev) SDK, if running the citizen app
+
+## Setup
+
+1. Install dependencies:
    ```bash
-   npx -y @better-auth/cli secret
+   npm install
+   ```
+2. Copy `.env.example` to `.env.local` and fill in:
+   ```
+   CONVEX_DEPLOYMENT=       # from your Convex project
+   VITE_CONVEX_URL=         # from your Convex project
+   GEMINI_API_KEY=          # from Google AI Studio
+   ```
+3. Push the schema and functions to Convex (interactive login on first run):
+   ```bash
+   npx convex dev
+   ```
+4. In another terminal, start the backend:
+   ```bash
+   npm run dev
+   ```
+   The backend listens on port 3000, bound to localhost only. If the Flutter app runs on a separate device (physical phone, LAN, VPN), expose it on all interfaces instead:
+   ```bash
+   npx dotenv -e .env.local -- sh -c "NODE_OPTIONS='--import ./instrument.server.mjs' vite dev --port 3000 --host 0.0.0.0"
    ```
 
-2. Visit the [Better Auth documentation](https://www.better-auth.com) to unlock the full potential of authentication in your app.
-
-### Adding a Database (Optional)
-
-Better Auth can work in stateless mode, but to persist user data, add a database:
-
-```typescript
-// src/lib/auth.ts
-import { betterAuth } from "better-auth";
-import { Pool } from "pg";
-
-export const auth = betterAuth({
-  database: new Pool({
-    connectionString: process.env.DATABASE_URL,
-  }),
-  // ... rest of config
-});
-```
-
-Then run migrations:
+### Running the Flutter app
 
 ```bash
-npx -y @better-auth/cli migrate
+cd android_app
+flutter pub get
+flutter run --dart-define=API_BASE_URL=http://<backend-host>:3000
 ```
 
+`API_BASE_URL` defaults to `http://10.0.2.2:3000` (the Android emulator's alias for the host machine) if omitted — override it for a physical device or a deployed backend.
 
-# Apollo Client Integration
+## Verifying the agent's tool use
 
-This add-on integrates Apollo Client with TanStack Start to provide modern streaming SSR support for GraphQL data fetching.
+The `findNearbyReports` tool call is logged server-side, so you can watch the model decide to invoke it:
 
-## Dependencies
-
-The following packages are automatically installed:
-
-- `@apollo/client` - Apollo Client core
-- `@apollo/client-integration-tanstack-start` - TanStack Start integration
-- `graphql` - GraphQL implementation
-
-## Configuration
-
-### 1. GraphQL Endpoint
-
-Configure your GraphQL API endpoint in `src/router.tsx`:
-
-```tsx
-// Configure Apollo Client
-const apolloClient = new ApolloClient({
-  cache: new InMemoryCache(),
-  link: new HttpLink({
-    uri: 'https://your-graphql-api.example.com/graphql', // Update this!
-  }),
-})
+```
+[agent] findNearbyReports(pothole @ 12.9716,77.5946) -> 3 match(es)
 ```
 
-You can use environment variables by creating a `.env.local` file:
+The same photo and note submitted at a location with existing nearby reports vs. an isolated one produces different `severity` values — the model is incorporating retrieved context into its own judgment, not running a fixed sequence.
+
+## Deployment
+
+Target: Google Cloud Run, as a container. Not yet wired up — a `Dockerfile` and Cloud Run deploy config are still to be added.
+
+## Commands
 
 ```bash
-VITE_GRAPHQL_ENDPOINT=https://your-api.com/graphql
+npm run dev              # start dev server (port 3000)
+npm run build             # production build
+npm run start              # run the production build
+npm run lint                # eslint
+npm run format               # prettier --write . && eslint --fix
+npm run check                 # prettier --check .
+npm run db:studio               # Prisma studio (Prisma/Postgres is unused scaffold — Convex is the real data store)
 ```
 
-The default configuration already uses this pattern:
-
-```tsx
-uri: import.meta.env.VITE_GRAPHQL_ENDPOINT ||
-  'https://your-graphql-api.example.com/graphql'
-```
-
-## Usage Patterns
-
-### Pattern 1: Loader with preloadQuery (Recommended for SSR)
-
-Use `preloadQuery` in route loaders for optimal streaming SSR performance:
-
-```tsx
-import { gql, TypedDocumentNode } from '@apollo/client'
-import { useReadQuery } from '@apollo/client/react'
-import { createFileRoute } from '@tanstack/react-router'
-
-const MY_QUERY: TypedDocumentNode<{
-  posts: { id: string; title: string; content: string }[]
-}> = gql`
-  query GetData {
-    posts {
-      id
-      title
-      content
-    }
-  }
-`
-
-export const Route = createFileRoute('/my-route')({
-  component: RouteComponent,
-  loader: ({ context: { preloadQuery } }) => {
-    const queryRef = preloadQuery(MY_QUERY, {
-      variables: {},
-    })
-    return { queryRef }
-  },
-})
-
-function RouteComponent() {
-  const { queryRef } = Route.useLoaderData()
-  const { data } = useReadQuery(queryRef)
-
-  return <div>{/* render your data */}</div>
-}
-```
-
-### Pattern 2: useSuspenseQuery
-
-Use `useSuspenseQuery` directly in components with automatic suspense support:
-
-```tsx
-import { gql, TypedDocumentNode } from '@apollo/client'
-import { useSuspenseQuery } from '@apollo/client/react'
-import { createFileRoute } from '@tanstack/react-router'
-
-const MY_QUERY: TypedDocumentNode<{
-  posts: { id: string; title: string }[]
-}> = gql`
-  query GetData {
-    posts {
-      id
-      title
-    }
-  }
-`
-
-export const Route = createFileRoute('/my-route')({
-  component: RouteComponent,
-})
-
-function RouteComponent() {
-  const { data } = useSuspenseQuery(MY_QUERY)
-
-  return <div>{/* render your data */}</div>
-}
-```
-
-### Pattern 3: Manual Refetching
-
-```tsx
-import { useQueryRefHandlers, useReadQuery } from '@apollo/client/react'
-
-function MyComponent() {
-  const { queryRef } = Route.useLoaderData()
-  const { refetch } = useQueryRefHandlers(queryRef)
-  const { data } = useReadQuery(queryRef)
-
-  return (
-    <div>
-      <button onClick={() => refetch()}>Refresh</button>
-      {/* render data */}
-    </div>
-  )
-}
-```
-
-## Important Notes
-
-### SSR Optimization
-
-The integration automatically handles:
-
-- Query deduplication across server and client
-- Streaming SSR with `@defer` directive support
-- Proper cache hydration
-
-## Learn More
-
-- [Apollo Client Documentation](https://www.apollographql.com/docs/react)
-- [@apollo/client-integration-tanstack-start](https://www.npmjs.com/package/@apollo/client-integration-tanstack-start)
-
-## Demo
-
-Visit `/demo/apollo-client` in your application to see a working example of Apollo Client integration.
-
-
-## Shadcn
-
-Add components using the latest version of [Shadcn](https://ui.shadcn.com/).
-
-```bash
-pnpm dlx shadcn@latest add button
-```
-
-
-
-## Routing
-
-This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/routes`.
-
-### Adding A Route
-
-To add a new route to your application just add a new file in the `./src/routes` directory.
-
-TanStack will automatically generate the content of the route file for you.
-
-Now that you have two routes you can use a `Link` component to navigate between them.
-
-### Adding Links
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
-
-```tsx
-import { Link } from "@tanstack/react-router";
-```
-
-Then anywhere in your JSX you can use it like so:
-
-```tsx
-<Link to="/about">About</Link>
-```
-
-This will create a link that will navigate to the `/about` route.
-
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
-
-### Using A Layout
-
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you render `{children}` in the `shellComponent`.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
-
-export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'My App' },
-    ],
-  }),
-  shellComponent: ({ children }) => (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        <header>
-          <nav>
-            <Link to="/">Home</Link>
-            <Link to="/about">About</Link>
-          </nav>
-        </header>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  ),
-})
-```
-
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
-## Server Functions
-
-TanStack Start provides server functions that allow you to write server-side code that seamlessly integrates with your client components.
-
-```tsx
-import { createServerFn } from '@tanstack/react-start'
-
-const getServerTime = createServerFn({
-  method: 'GET',
-}).handler(async () => {
-  return new Date().toISOString()
-})
-
-// Use in a component
-function MyComponent() {
-  const [time, setTime] = useState('')
-  
-  useEffect(() => {
-    getServerTime().then(setTime)
-  }, [])
-  
-  return <div>Server time: {time}</div>
-}
-```
-
-## API Routes
-
-You can create API routes by using the `server` property in your route definitions:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-import { json } from '@tanstack/react-start'
-
-export const Route = createFileRoute('/api/hello')({
-  server: {
-    handlers: {
-      GET: () => json({ message: 'Hello, World!' }),
-    },
-  },
-})
-```
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-
-export const Route = createFileRoute('/people')({
-  loader: async () => {
-    const response = await fetch('https://swapi.dev/api/people')
-    return response.json()
-  },
-  component: PeopleComponent,
-})
-
-function PeopleComponent() {
-  const data = Route.useLoaderData()
-  return (
-    <ul>
-      {data.results.map((person) => (
-        <li key={person.name}>{person.name}</li>
-      ))}
-    </ul>
-  )
-}
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
-
-For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).
+See `CLAUDE.md` for the full architecture writeup and `project.md` for the original product spec.
