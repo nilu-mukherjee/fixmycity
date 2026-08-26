@@ -6,14 +6,16 @@ if (!CONVEX_URL) {
   console.error('missing envar VITE_CONVEX_URL')
 }
 
-// Single shared instance: connects the Convex client to TanStack Query's
-// cache so `convexQuery(api.foo.bar, args)` queries work (they rely on this
-// being registered as the QueryClient's default queryFn/hashFn) and gives
-// `AppConvexProvider` (src/integrations/convex/provider.tsx) the same
-// underlying Convex client for its context provider.
-export const convexQueryClient = new ConvexQueryClient(CONVEX_URL)
-
 export function getContext() {
+  // A fresh ConvexQueryClient per call, not a module-level singleton.
+  // getContext() runs once per incoming request on the server (every page
+  // load AND every API route — TanStack Start's router tree covers both)
+  // and once on the client at hydration. ConvexQueryClient.connect() can
+  // only be called once per instance ("already subscribed!" otherwise), so
+  // reusing one across server requests broke every request after the first.
+  // Client-side this still behaves like a singleton, since getRouter() (and
+  // therefore getContext()) only runs once per browser session there.
+  const convexQueryClient = new ConvexQueryClient(CONVEX_URL)
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
@@ -26,6 +28,7 @@ export function getContext() {
 
   return {
     queryClient,
+    convexQueryClient,
   }
 }
 export default function TanstackQueryProvider() {}

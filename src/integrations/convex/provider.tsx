@@ -1,10 +1,12 @@
 import { ConvexProvider } from 'convex/react'
 
-import { convexQueryClient } from '../tanstack-query/root-provider'
+import type { ConvexQueryClient } from '@convex-dev/react-query'
 
 export default function AppConvexProvider({
+  convexQueryClient,
   children,
 }: {
+  convexQueryClient: ConvexQueryClient
   children: React.ReactNode
 }) {
   return (

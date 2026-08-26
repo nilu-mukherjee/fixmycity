@@ -17,9 +17,11 @@ import appCss from '../styles.css?url'
 import type { ApolloClientIntegration } from '@apollo/client-integration-tanstack-start'
 
 import type { QueryClient } from '@tanstack/react-query'
+import type { ConvexQueryClient } from '@convex-dev/react-query'
 
 interface MyRouterContext extends ApolloClientIntegration.RouterContext {
   queryClient: QueryClient
+  convexQueryClient: ConvexQueryClient
 }
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
@@ -55,13 +57,15 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 })
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  const { convexQueryClient } = Route.useRouteContext()
+
   return (
     <html lang={getLocale()}>
       <head>
         <HeadContent />
       </head>
       <body>
-        <ConvexProvider>
+        <ConvexProvider convexQueryClient={convexQueryClient}>
           {children}
           <TanStackDevtools
             config={{
