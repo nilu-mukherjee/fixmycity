@@ -3,7 +3,7 @@ import { ConvexHttpClient } from 'convex/browser'
 import * as z from 'zod'
 
 import { api } from '../../../convex/_generated/api'
-import { runReportPipeline } from '../../genkit/report-flow'
+import { createUploadUrl } from '../../gcs/storage'
 
 import type { Id } from '../../../convex/_generated/dataModel'
 
@@ -36,24 +36,14 @@ function convexClient() {
   return new ConvexHttpClient(url)
 }
 
-/** Step 1: citizen app gets a short-lived URL to upload the captured photo to. */
-export const getUploadUrl = os.input(z.object({})).handler(async () => {
-  const uploadUrl = await convexClient().mutation(
-    api.tickets.generateUploadUrl,
-    {},
-  )
-  return { uploadUrl }
-})
-
 /**
- * Step 2: runs the Genkit flow (Gemini Vision classification, duplicate
- * check, trust score, department routing) and returns an editable presubmit
- * result. Nothing is persisted yet.
+ * Step 1: citizen app creates a draft and gets a short-lived signed URL to
+ * PUT the captured photo to. Analysis is NOT triggered here — it fires
+ * asynchronously once Eventarc observes the upload land in GCS.
  */
-export const analyzeReport = os
+export const createDraft = os
   .input(
     z.object({
-      photoStorageId: z.string(),
       latitude: z.number(),
       longitude: z.number(),
       accuracyMeters: z.number().optional(),
@@ -61,12 +51,27 @@ export const analyzeReport = os
     }),
   )
   .handler(async ({ input }) => {
-    return await runReportPipeline({
-      photoStorageId: input.photoStorageId,
-      latitude: input.latitude,
-      longitude: input.longitude,
-      accuracyMeters: input.accuracyMeters,
-      urgencyNote: input.urgencyNote,
+    const convex = convexClient()
+    const draft = await convex.mutation(api.drafts.create, input)
+    if (!draft) {
+      throw new Error('Failed to create draft')
+    }
+
+    const objectName = `reports/${draft._id}.jpg`
+    const uploadUrl = await createUploadUrl(objectName, 'image/jpeg')
+
+    return { draftId: draft._id, uploadUrl }
+  })
+
+/**
+ * Step 2: citizen app polls this until the draft's Genkit analysis
+ * (triggered by the GCS upload via Eventarc) finishes.
+ */
+export const getDraft = os
+  .input(z.object({ draftId: z.string() }))
+  .handler(async ({ input }) => {
+    return await convexClient().query(api.drafts.get, {
+      id: input.draftId as Id<'presubmitDrafts'>,
     })
   })
 
@@ -74,7 +79,7 @@ export const analyzeReport = os
 export const createTicket = os
   .input(
     z.object({
-      photoStorageId: z.string(),
+      photoGcsObjectName: z.string(),
       category: z.enum(CATEGORIES),
       severity: z.enum(SEVERITIES),
       description: z.string(),
@@ -87,10 +92,7 @@ export const createTicket = os
     }),
   )
   .handler(async ({ input }) => {
-    return await convexClient().mutation(api.tickets.create, {
-      ...input,
-      photoStorageId: input.photoStorageId as Id<'_storage'>,
-    })
+    return await convexClient().mutation(api.tickets.create, input)
   })
 
 /** All tickets, most recent first. No citizen scoping yet (auth not wired up). */

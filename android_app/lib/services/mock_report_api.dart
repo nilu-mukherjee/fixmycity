@@ -33,6 +33,7 @@ class MockReportApi implements ReportApi {
       Ticket(
         id: _issueId(),
         photoPath: '',
+        photoGcsObjectName: '',
         category: IssueCategory.pothole,
         severity: Severity.high,
         description: 'Deep pothole near the main road junction.',
@@ -53,6 +54,7 @@ class MockReportApi implements ReportApi {
       Ticket(
         id: _issueId(),
         photoPath: '',
+        photoGcsObjectName: '',
         category: IssueCategory.garbage,
         severity: Severity.medium,
         description: 'Overflowing garbage bin, uncollected for days.',
@@ -110,6 +112,7 @@ class MockReportApi implements ReportApi {
     final ticket = Ticket(
       id: _issueId(),
       photoPath: presubmit.photoPath,
+      photoGcsObjectName: '',
       category: presubmit.category,
       severity: presubmit.severity,
       description: presubmit.description,

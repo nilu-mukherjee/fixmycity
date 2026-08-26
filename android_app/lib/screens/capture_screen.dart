@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../models/report.dart';
+import '../services/http_report_api.dart';
 import '../services/service_locator.dart';
 import 'presubmit_screen.dart';
 
@@ -130,6 +131,12 @@ class _CaptureScreenState extends State<CaptureScreen> {
       if (ticket != null) {
         Navigator.of(context).pop(ticket);
       }
+    } on NotCivicIssueException catch (e) {
+      // Force a retake rather than letting them resubmit the same photo.
+      setState(() {
+        _photo = null;
+        _error = "$e Please retake a photo of the actual issue.";
+      });
     } catch (e) {
       setState(() => _error = 'Could not analyze report: $e');
     } finally {

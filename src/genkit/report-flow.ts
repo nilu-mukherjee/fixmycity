@@ -4,7 +4,7 @@ import { ConvexHttpClient } from 'convex/browser'
 
 import { api } from '../../convex/_generated/api'
 
-import type { Doc, Id } from '../../convex/_generated/dataModel'
+import type { Doc } from '../../convex/_generated/dataModel'
 
 const ai = genkit({ plugins: [googleAI()] })
 
@@ -35,12 +35,17 @@ const DEPARTMENT_BY_CATEGORY: Record<IssueCategory, string> = {
 }
 
 const GeminiAnalysisSchema = z.object({
+  isCivicIssue: z
+    .boolean()
+    .describe(
+      'True if the photo depicts a genuine public infrastructure / civic problem matching one of the categories. False if it shows something unrelated to civic infrastructure — a person, a pet, a screen, an indoor object, food, etc. Check this first: everything else in this schema still needs a value even when this is false, but the caller will discard them and refuse the submission.',
+    ),
   category: z.enum(CATEGORIES),
   severity: z.enum(SEVERITIES),
   description: z
     .string()
     .describe(
-      'A one to two sentence, citizen-facing description of the issue shown in the photo.',
+      'A one to two sentence, citizen-facing description of what the photo actually shows. If isCivicIssue is false, explain what the photo shows instead and why it is not a civic issue.',
     ),
   imageIsClear: z
     .boolean()
@@ -118,14 +123,16 @@ const analyzeReportFlow = ai.defineFlow(
         {
           text: [
             'You are the AI intake system for a civic issue-reporting app.',
-            'A citizen photographed a public infrastructure problem and submitted this note:',
+            'A citizen submitted this photo, claiming it shows a public infrastructure problem, along with this note:',
             `"${input.urgencyNote}"`,
             `The report's location is latitude ${input.latitude}, longitude ${input.longitude}.`,
             '',
-            'Classify the issue shown in the photo into exactly one category:',
+            'First, check whether the photo actually shows a real civic/public-infrastructure problem at all — as opposed to something unrelated (a person, a pet, a screen, an indoor object, food, a meme, etc.). Set isCivicIssue accordingly. Submissions where isCivicIssue is false get blocked before reaching a human, so be honest rather than charitable here.',
+            '',
+            'If it is a civic issue, classify it into exactly one category:',
             CATEGORIES.join(', '),
             '',
-            'Once you have identified the likely category, call findNearbyReports with that category and this location to check whether other citizens have already reported the same issue nearby.',
+            'Once you have identified the likely category, call findNearbyReports with that category and this location to check whether other citizens have already reported the same issue nearby. Skip this call if isCivicIssue is false.',
             '',
             'Estimate its severity as one of: low, medium, high, emergency',
             '(emergency = immediate danger to life/safety, e.g. exposed live wires, deep open drain on a walkway, major road collapse).',
@@ -197,14 +204,20 @@ function computeTrustScore(params: {
   }
 }
 
-export interface PresubmitResult {
-  category: IssueCategory
-  severity: Severity
-  description: string
-  department: string
-  trustScore: TrustScoreBreakdown
-  nearbyDuplicateCount: number
-}
+export type PresubmitResult =
+  | {
+      isCivicIssue: true
+      category: IssueCategory
+      severity: Severity
+      description: string
+      department: string
+      trustScore: TrustScoreBreakdown
+      nearbyDuplicateCount: number
+    }
+  | {
+      isCivicIssue: false
+      description: string
+    }
 
 /**
  * Orchestrates the full "presubmit" pipeline: Gemini Vision classification,
@@ -213,7 +226,7 @@ export interface PresubmitResult {
  * `src/orpc/router/reports.ts`'s `createTicket`).
  */
 export async function runReportPipeline(params: {
-  photoStorageId: string
+  photoUrl: string
   latitude: number
   longitude: number
   accuracyMeters: number | undefined
@@ -227,21 +240,14 @@ export async function runReportPipeline(params: {
   // share across concurrent server requests.
   const convex = new ConvexHttpClient(convexUrl)
 
-  const photo = await convex.query(api.tickets.getPhotoUrl, {
-    storageId: params.photoStorageId as Id<'_storage'>,
-  })
-  if (!photo) {
-    throw new Error(`No photo found for storage id ${params.photoStorageId}`)
-  }
-
-  const photoResponse = await fetch(photo.url)
+  const photoResponse = await fetch(params.photoUrl)
   if (!photoResponse.ok) {
-    throw new Error(`Could not fetch photo from storage: ${photoResponse.status}`)
+    throw new Error(`Could not fetch photo from GCS: ${photoResponse.status}`)
   }
   const photoBase64 = Buffer.from(await photoResponse.arrayBuffer()).toString(
     'base64',
   )
-  const photoContentType = photo.contentType ?? 'image/jpeg'
+  const photoContentType = photoResponse.headers.get('content-type') ?? 'image/jpeg'
   const photoDataUri = `data:${photoContentType};base64,${photoBase64}`
 
   const analysis = await analyzeReportFlow({
@@ -250,6 +256,10 @@ export async function runReportPipeline(params: {
     longitude: params.longitude,
     urgencyNote: params.urgencyNote,
   })
+
+  if (!analysis.isCivicIssue) {
+    return { isCivicIssue: false, description: analysis.description }
+  }
 
   const nearbyMatches = await convex.query(api.tickets.findNearby, {
     latitude: params.latitude,
@@ -264,6 +274,7 @@ export async function runReportPipeline(params: {
   })
 
   return {
+    isCivicIssue: true,
     category: analysis.category,
     severity: analysis.severity,
     description: analysis.description,

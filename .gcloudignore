@@ -1,0 +1,17 @@
+.git
+.gitignore
+
+node_modules
+dist
+.output
+.env
+.env.local
+.env.*.local
+*.local
+
+android_app
+docs
+.vscode
+.idea
+
+npm-debug.log*

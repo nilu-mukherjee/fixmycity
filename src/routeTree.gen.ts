@@ -14,6 +14,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as ApiSplatRouteImport } from './routes/api.$'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiEventsPhotoUploadedRouteImport } from './routes/api.events.photo-uploaded'
 import { Route as ApiRpcSplatRouteImport } from './routes/api.rpc.$'
 
 const IndexRoute = IndexRouteImport.update({
@@ -41,6 +42,11 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiEventsPhotoUploadedRoute = ApiEventsPhotoUploadedRouteImport.update({
+  id: '/api/events/photo-uploaded',
+  path: '/api/events/photo-uploaded',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiRpcSplatRoute = ApiRpcSplatRouteImport.update({
   id: '/api/rpc/$',
   path: '/api/rpc/$',
@@ -53,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/mcp': typeof McpRoute
   '/api/$': typeof ApiSplatRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/events/photo-uploaded': typeof ApiEventsPhotoUploadedRoute
   '/api/rpc/$': typeof ApiRpcSplatRoute
 }
 export interface FileRoutesByTo {
@@ -61,6 +68,7 @@ export interface FileRoutesByTo {
   '/mcp': typeof McpRoute
   '/api/$': typeof ApiSplatRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/events/photo-uploaded': typeof ApiEventsPhotoUploadedRoute
   '/api/rpc/$': typeof ApiRpcSplatRoute
 }
 export interface FileRoutesById {
@@ -70,13 +78,28 @@ export interface FileRoutesById {
   '/mcp': typeof McpRoute
   '/api/$': typeof ApiSplatRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/events/photo-uploaded': typeof ApiEventsPhotoUploadedRoute
   '/api/rpc/$': typeof ApiRpcSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/mcp' | '/api/$' | '/api/auth/$' | '/api/rpc/$'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/mcp'
+    | '/api/$'
+    | '/api/auth/$'
+    | '/api/events/photo-uploaded'
+    | '/api/rpc/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/mcp' | '/api/$' | '/api/auth/$' | '/api/rpc/$'
+  to:
+    | '/'
+    | '/admin'
+    | '/mcp'
+    | '/api/$'
+    | '/api/auth/$'
+    | '/api/events/photo-uploaded'
+    | '/api/rpc/$'
   id:
     | '__root__'
     | '/'
@@ -84,6 +107,7 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/api/$'
     | '/api/auth/$'
+    | '/api/events/photo-uploaded'
     | '/api/rpc/$'
   fileRoutesById: FileRoutesById
 }
@@ -93,6 +117,7 @@ export interface RootRouteChildren {
   McpRoute: typeof McpRoute
   ApiSplatRoute: typeof ApiSplatRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiEventsPhotoUploadedRoute: typeof ApiEventsPhotoUploadedRoute
   ApiRpcSplatRoute: typeof ApiRpcSplatRoute
 }
 
@@ -133,6 +158,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/events/photo-uploaded': {
+      id: '/api/events/photo-uploaded'
+      path: '/api/events/photo-uploaded'
+      fullPath: '/api/events/photo-uploaded'
+      preLoaderRoute: typeof ApiEventsPhotoUploadedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/rpc/$': {
       id: '/api/rpc/$'
       path: '/api/rpc/$'
@@ -149,6 +181,7 @@ const rootRouteChildren: RootRouteChildren = {
   McpRoute: McpRoute,
   ApiSplatRoute: ApiSplatRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiEventsPhotoUploadedRoute: ApiEventsPhotoUploadedRoute,
   ApiRpcSplatRoute: ApiRpcSplatRoute,
 }
 export const routeTree = rootRouteImport

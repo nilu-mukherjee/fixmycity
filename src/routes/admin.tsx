@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { convexQuery, useConvexMutation } from '@convex-dev/react-query'
 
 import { Button } from '#/components/ui/button'
+import { getPublicUrl } from '#/gcs/url'
 import { api } from '../../convex/_generated/api'
 
 import type { Doc, Id } from '../../convex/_generated/dataModel'
@@ -270,7 +271,6 @@ function TrustRow({ label, points, max }: { label: string; points: number; max: 
 function DetailPanel({ ticket, onClose }: { ticket: Doc<'tickets'>; onClose: () => void }) {
   const updateStatus = useConvexMutation(api.tickets.updateStatus)
   const [pending, setPending] = useState(false)
-  const photoQuery = useQuery(convexQuery(api.tickets.getPhotoUrl, { storageId: ticket.photoStorageId }))
   const next = nextStatus(ticket.status)
 
   const trustTotal =
@@ -326,14 +326,12 @@ function DetailPanel({ ticket, onClose }: { ticket: Doc<'tickets'>; onClose: () 
             <StatusPill status={ticket.status} />
           </div>
 
-          {photoQuery.data?.url && (
-            <img
-              src={photoQuery.data.url}
-              alt={`Reported ${CATEGORY_LABEL[ticket.category].toLowerCase()}`}
-              className="aspect-4/3 w-full rounded-md border object-cover"
-              style={{ borderColor: 'var(--admin-line)' }}
-            />
-          )}
+          <img
+            src={getPublicUrl(ticket.photoGcsObjectName)}
+            alt={`Reported ${CATEGORY_LABEL[ticket.category].toLowerCase()}`}
+            className="aspect-4/3 w-full rounded-md border object-cover"
+            style={{ borderColor: 'var(--admin-line)' }}
+          />
 
           <p className="text-sm leading-relaxed">{ticket.description}</p>
 

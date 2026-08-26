@@ -25,30 +25,6 @@ const trustScoreValidator = v.object({
   recentReportPoints: v.number(),
 })
 
-/** Short-lived URL the citizen app POSTs the raw photo bytes to. */
-export const generateUploadUrl = mutation({
-  args: {},
-  handler: async (ctx) => {
-    return await ctx.storage.generateUploadUrl()
-  },
-})
-
-/**
- * Resolves a stored photo to a fetchable HTTPS URL + its content type, for
- * the Genkit flow (outside Convex) to hand to Gemini. Gemini only infers
- * media content type from `data:` URIs, not plain `https:` URLs, so the
- * content type has to be passed through explicitly.
- */
-export const getPhotoUrl = query({
-  args: { storageId: v.id('_storage') },
-  handler: async (ctx, args) => {
-    const url = await ctx.storage.getUrl(args.storageId)
-    if (!url) return null
-    const metadata = await ctx.db.system.get('_storage', args.storageId)
-    return { url, contentType: metadata?.contentType ?? null }
-  },
-})
-
 /**
  * Same-category tickets within the duplicate radius (150m), mirroring the
  * reference implementation in android_app/lib/services/mock_report_api.dart
@@ -82,7 +58,7 @@ export const findNearby = query({
 
 export const create = mutation({
   args: {
-    photoStorageId: v.id('_storage'),
+    photoGcsObjectName: v.string(),
     category: categoryValidator,
     severity: severityValidator,
     description: v.string(),

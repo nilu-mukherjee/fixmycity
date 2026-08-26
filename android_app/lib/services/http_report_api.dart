@@ -15,20 +15,36 @@ class HttpReportApi implements ReportApi {
 
   final http.Client _client;
 
+  /// How long to keep polling `getDraft` before giving up — the Genkit
+  /// pipeline (Gemini call + duplicate check) normally finishes in a few
+  /// seconds, but Eventarc delivery adds its own latency on top.
+  static const _pollInterval = Duration(milliseconds: 1500);
+  static const _maxPollAttempts = 30;
+
   @override
   Future<PresubmitResult> classifyReport({
     required String photoPath,
     required GeoPoint location,
     required String urgencyNote,
   }) async {
-    final uploadUrl =
-        (await _call('getUploadUrl', {}) as Map<String, dynamic>)['uploadUrl']
-            as String;
+    final created =
+        await _call('createDraft', {
+              'latitude': location.latitude,
+              'longitude': location.longitude,
+              if (location.accuracyMeters != null)
+                'accuracyMeters': location.accuracyMeters,
+              'urgencyNote': urgencyNote,
+            })
+            as Map<String, dynamic>;
+    final draftId = created['draftId'] as String;
+    final uploadUrl = created['uploadUrl'] as String;
 
+    // Analysis fires asynchronously (Eventarc watching the GCS bucket) once
+    // this PUT lands — not triggered by this call directly.
     final bytes = await File(photoPath).readAsBytes();
-    final uploadResponse = await _client.post(
+    final uploadResponse = await _client.put(
       Uri.parse(uploadUrl),
-      headers: {'Content-Type': _guessContentType(photoPath)},
+      headers: {'Content-Type': 'image/jpeg'},
       body: bytes,
     );
     if (uploadResponse.statusCode >= 400) {
@@ -37,50 +53,64 @@ class HttpReportApi implements ReportApi {
         '${uploadResponse.body}',
       );
     }
-    final storageId =
-        (jsonDecode(uploadResponse.body)
-                as Map<String, dynamic>)['storageId']
-            as String;
 
-    final analysis =
-        await _call('analyzeReport', {
-              'photoStorageId': storageId,
-              'latitude': location.latitude,
-              'longitude': location.longitude,
-              if (location.accuracyMeters != null)
-                'accuracyMeters': location.accuracyMeters,
-              'urgencyNote': urgencyNote,
-            })
-            as Map<String, dynamic>;
+    for (var attempt = 0; attempt < _maxPollAttempts; attempt++) {
+      await Future<void>.delayed(_pollInterval);
+      final draft =
+          await _call('getDraft', {'draftId': draftId})
+              as Map<String, dynamic>?;
+      if (draft == null) {
+        throw ReportApiException('Draft $draftId disappeared');
+      }
 
-    return PresubmitResult(
-      photoPath: photoPath,
-      photoStorageId: storageId,
-      category: IssueCategory.fromApi(analysis['category'] as String),
-      severity: Severity.fromApi(analysis['severity'] as String),
-      description: analysis['description'] as String,
-      location: location,
-      urgencyNote: urgencyNote,
-      trustScore: TrustScoreBreakdown.fromJson(
-        analysis['trustScore'] as Map<String, dynamic>,
-      ),
-      nearbyDuplicateCount: analysis['nearbyDuplicateCount'] as int,
+      final status = draft['status'] as String;
+      if (status == 'error') {
+        throw ReportApiException(
+          (draft['errorMessage'] as String?) ?? 'Report analysis failed',
+        );
+      }
+      if (status == 'not_a_civic_issue') {
+        throw NotCivicIssueException(
+          draft['description'] as String? ??
+              "This doesn't look like a civic issue.",
+        );
+      }
+      if (status == 'ready') {
+        return PresubmitResult(
+          photoPath: photoPath,
+          draftId: draftId,
+          category: IssueCategory.fromApi(draft['category'] as String),
+          severity: Severity.fromApi(draft['severity'] as String),
+          description: draft['description'] as String,
+          location: location,
+          urgencyNote: urgencyNote,
+          trustScore: TrustScoreBreakdown.fromJson(
+            draft['trustScore'] as Map<String, dynamic>,
+          ),
+          nearbyDuplicateCount: draft['nearbyDuplicateCount'] as int,
+        );
+      }
+      // status == 'processing' — keep polling.
+    }
+
+    throw ReportApiException(
+      'Timed out waiting for report analysis to finish',
     );
   }
 
   @override
   Future<Ticket> createTicket(PresubmitResult presubmit) async {
-    final photoStorageId = presubmit.photoStorageId;
-    if (photoStorageId == null) {
+    final draftId = presubmit.draftId;
+    if (draftId == null) {
       throw StateError(
-        'createTicket called without a photoStorageId — classifyReport '
-        'must run first.',
+        'createTicket called without a draftId — classifyReport must run '
+        'first.',
       );
     }
 
     final json =
         await _call('createTicket', {
-              'photoStorageId': photoStorageId,
+              'photoGcsObjectName': 'reports/$draftId.jpg',
               'category': presubmit.category.apiValue,
               'severity': presubmit.severity.apiValue,
               'description': presubmit.description,
@@ -126,18 +156,23 @@ class HttpReportApi implements ReportApi {
     }
     return payload;
   }
-
-  String _guessContentType(String path) {
-    final lower = path.toLowerCase();
-    if (lower.endsWith('.png')) return 'image/png';
-    if (lower.endsWith('.heic')) return 'image/heic';
-    if (lower.endsWith('.webp')) return 'image/webp';
-    return 'image/jpeg';
-  }
 }
 
 class ReportApiException implements Exception {
   ReportApiException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
+}
+
+/// Thrown when Gemini determines the submitted photo doesn't depict a real
+/// civic issue — submission is blocked rather than creating a ticket with a
+/// fabricated category. [message] is Gemini's own explanation of what the
+/// photo actually shows.
+class NotCivicIssueException implements Exception {
+  NotCivicIssueException(this.message);
 
   final String message;
 

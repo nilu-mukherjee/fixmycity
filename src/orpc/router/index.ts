@@ -1,17 +1,17 @@
 import { addTodo, listTodos } from './todos'
 import {
-  analyzeReport,
+  createDraft,
   createTicket,
+  getDraft,
   getTicket,
-  getUploadUrl,
   listTickets,
 } from './reports'
 
 export default {
   listTodos,
   addTodo,
-  getUploadUrl,
-  analyzeReport,
+  createDraft,
+  getDraft,
   createTicket,
   listTickets,
   getTicket,

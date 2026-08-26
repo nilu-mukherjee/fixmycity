@@ -190,7 +190,7 @@ class PresubmitResult {
     required this.urgencyNote,
     required this.trustScore,
     required this.nearbyDuplicateCount,
-    this.photoStorageId,
+    this.draftId,
   });
 
   final String photoPath;
@@ -201,11 +201,11 @@ class PresubmitResult {
   final String urgencyNote;
   final TrustScoreBreakdown trustScore;
 
-  /// The backend's Convex file-storage id for the uploaded photo — set by
-  /// [HttpReportApi] once the photo has actually been uploaded, so
-  /// `createTicket` can reference it without re-uploading. Null under
-  /// [MockReportApi], which never uploads anything.
-  final String? photoStorageId;
+  /// The backend's Convex `presubmitDrafts` id — set by [HttpReportApi] once
+  /// the photo has been uploaded and analyzed, so `createTicket` can derive
+  /// the GCS object name (`reports/{draftId}.jpg`) without re-uploading.
+  /// Null under [MockReportApi], which never uploads anything.
+  final String? draftId;
 
   /// How many existing tickets this looks like a duplicate of (same
   /// category, within the proximity radius) — surfaced so the citizen knows
@@ -218,6 +218,7 @@ class Ticket {
   Ticket({
     required this.id,
     required this.photoPath,
+    required this.photoGcsObjectName,
     required this.category,
     required this.severity,
     required this.description,
@@ -229,6 +230,11 @@ class Ticket {
 
   final String id;
   final String photoPath;
+
+  /// The GCS object backing this ticket's photo (`reports/{draftId}.jpg`) —
+  /// always present, unlike [photoPath] which is only set for a ticket this
+  /// device just created in this session.
+  final String photoGcsObjectName;
   final IssueCategory category;
   final Severity severity;
   final String description;
@@ -238,6 +244,13 @@ class Ticket {
   final DateTime createdAt;
 
   String get department => category.department;
+
+  /// Public read URL for [photoGcsObjectName] (the bucket grants `allUsers`
+  /// `objectViewer` — see src/gcs/url.ts on the backend for the same URL
+  /// shape). Prefer [photoPath] when it's available (no network round trip
+  /// needed for a photo already on this device).
+  String get photoUrl =>
+      'https://storage.googleapis.com/fixmycity-506122-photos/$photoGcsObjectName';
 
   /// Parses a ticket document as returned by the backend's `createTicket`,
   /// `listTickets`, or `getTicket` procedures (see convex/tickets.ts).
@@ -252,6 +265,7 @@ class Ticket {
     return Ticket(
       id: json['_id'] as String,
       photoPath: localPhotoPath ?? '',
+      photoGcsObjectName: json['photoGcsObjectName'] as String,
       category: IssueCategory.fromApi(json['category'] as String),
       severity: Severity.fromApi(json['severity'] as String),
       description: json['description'] as String,

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -20,6 +22,24 @@ class TicketDetailScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: AspectRatio(
+              aspectRatio: 4 / 3,
+              child: ticket.photoPath.isNotEmpty
+                  ? Image.file(File(ticket.photoPath), fit: BoxFit.cover)
+                  : ticket.photoGcsObjectName.isNotEmpty
+                  ? Image.network(ticket.photoUrl, fit: BoxFit.cover)
+                  : ColoredBox(
+                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                      child: Icon(
+                        Icons.image_not_supported_outlined,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+            ),
+          ),
+          const SizedBox(height: 16),
           Card(
             margin: EdgeInsets.zero,
             child: Padding(
@@ -53,7 +73,21 @@ class TicketDetailScreen extends StatelessWidget {
             'Reported ${DateFormat.yMMMd().add_jm().format(ticket.createdAt)}',
             style: Theme.of(context).textTheme.bodySmall,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.location_on_outlined),
+            title: Text(
+              '${ticket.location.latitude.toStringAsFixed(5)}, '
+              '${ticket.location.longitude.toStringAsFixed(5)}',
+            ),
+            subtitle: Text(
+              ticket.location.accuracyMeters == null
+                  ? 'Accuracy unknown'
+                  : '±${ticket.location.accuracyMeters!.toStringAsFixed(0)}m accuracy',
+            ),
+          ),
+          const SizedBox(height: 4),
           TrustScoreCard(score: ticket.trustScore),
           const SizedBox(height: 24),
           OutlinedButton.icon(
