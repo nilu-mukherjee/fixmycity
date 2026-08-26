@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@100..900&display=swap');
 @import 'tailwindcss';
 @plugin '@tailwindcss/typography';
 
@@ -155,6 +155,58 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/* ---- TailAdmin design tokens — used only by the admin console (src/routes/admin.tsx).
+   Additive only: new namespaced color/shadow/font tokens, doesn't touch anything
+   the rest of the site already uses. ---- */
+@theme {
+  --font-outfit: Outfit, sans-serif;
+
+  --text-theme-xs: 12px;
+  --text-theme-xs--line-height: 18px;
+  --text-theme-sm: 14px;
+  --text-theme-sm--line-height: 20px;
+
+  --color-brand-25: #f2f7ff;
+  --color-brand-50: #ecf3ff;
+  --color-brand-100: #dde9ff;
+  --color-brand-200: #c2d6ff;
+  --color-brand-300: #9cb9ff;
+  --color-brand-400: #7592ff;
+  --color-brand-500: #465fff;
+  --color-brand-600: #3641f5;
+  --color-brand-700: #2a31d8;
+  --color-brand-800: #252dae;
+  --color-brand-900: #262e89;
+  --color-brand-950: #161950;
+
+  --color-success-50: #ecfdf3;
+  --color-success-100: #d1fadf;
+  --color-success-500: #12b76a;
+  --color-success-600: #039855;
+  --color-success-700: #027a48;
+
+  --color-error-50: #fef3f2;
+  --color-error-100: #fee4e2;
+  --color-error-500: #f04438;
+  --color-error-600: #d92d20;
+  --color-error-700: #b42318;
+
+  --color-warning-50: #fffaeb;
+  --color-warning-100: #fef0c7;
+  --color-warning-500: #f79009;
+  --color-warning-600: #dc6803;
+  --color-warning-700: #b54708;
+
+  --color-theme-purple-50: #f4f3ff;
+  --color-theme-purple-500: #7a5af8;
+  --color-theme-purple-700: #5925dc;
+
+  --shadow-theme-xs: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
+  --shadow-theme-sm: 0px 1px 3px 0px rgba(16, 24, 40, 0.1), 0px 1px 2px 0px rgba(16, 24, 40, 0.06);
+  --shadow-theme-md: 0px 4px 8px -2px rgba(16, 24, 40, 0.1), 0px 2px 4px -2px rgba(16, 24, 40, 0.06);
+  --shadow-theme-lg: 0px 12px 16px -4px rgba(16, 24, 40, 0.08), 0px 4px 6px -2px rgba(16, 24, 40, 0.03);
 }
 
 html,
@@ -346,59 +398,13 @@ a {
   }
 }
 
-/* ---- Admin console (issue queue) — scoped tokens, doesn't touch the tokens above ---- */
+/* ---- Admin console (issue queue) — TailAdmin-styled, plain Tailwind
+   utility classes with dark: variants throughout (see src/routes/admin.tsx).
+   Only the emergency hazard stripe needs actual CSS, since Tailwind alone
+   can't express a diagonal repeating pattern. ---- */
 
 .admin {
-  --admin-ink: #191b1a;
-  --admin-ink-soft: #5b6157;
-  --admin-paper: #eef0ea;
-  --admin-panel: #f8f9f5;
-  --admin-line: #d6dacc;
-  --admin-accent: #c23b22;
-  --admin-accent-soft: #c23b221a;
-
-  --status-received: #7c8b99;
-  --status-verified: #3e7cb1;
-  --status-assigned: #7a5fa6;
-  --status-in_progress: #b4791e;
-  --status-resolved: #3f8f5c;
-
-  --severity-low: #6f9376;
-  --severity-medium: #c99a3e;
-  --severity-high: #c9622b;
-  --severity-emergency: var(--admin-accent);
-
-  font-family: 'Manrope', system-ui, sans-serif;
-  background: var(--admin-paper);
-  color: var(--admin-ink);
-}
-
-.dark .admin {
-  --admin-ink: #ece9e2;
-  --admin-ink-soft: #a3a99c;
-  --admin-paper: #14160f;
-  --admin-panel: #1b1e15;
-  --admin-line: #33362a;
-  --admin-accent: #e2694c;
-  --admin-accent-soft: #e2694c26;
-
-  --status-received: #94a3b0;
-  --status-verified: #6fa8d6;
-  --status-assigned: #a68bd6;
-  --status-in_progress: #dba24d;
-  --status-resolved: #6ac290;
-
-  --severity-low: #8fb997;
-  --severity-medium: #dbb75d;
-  --severity-high: #dd8354;
-}
-
-.admin .font-display {
-  font-family: 'Fraunces', Georgia, serif;
-}
-
-.admin .font-mono {
-  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-family: var(--font-outfit);
 }
 
 /* Emergency severity: a real hazard stripe, not decoration — the signature
@@ -406,9 +412,19 @@ a {
 .admin .severity-stripe--emergency {
   background-image: repeating-linear-gradient(
     -45deg,
-    var(--severity-emergency),
-    var(--severity-emergency) 6px,
-    var(--admin-ink) 6px,
-    var(--admin-ink) 12px
+    var(--color-error-500),
+    var(--color-error-500) 6px,
+    var(--color-gray-900) 6px,
+    var(--color-gray-900) 12px
+  );
+}
+
+.dark .admin .severity-stripe--emergency {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    var(--color-error-500),
+    var(--color-error-500) 6px,
+    var(--color-gray-950) 6px,
+    var(--color-gray-950) 12px
   );
 }
