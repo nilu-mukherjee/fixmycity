@@ -80,14 +80,27 @@ class _HomeScreenState extends State<HomeScreen> {
             if (snapshot.hasError) {
               return ListView(
                 children: [
-                  const SizedBox(height: 120),
+                  const SizedBox(height: 100),
+                  Icon(
+                    Icons.cloud_off_outlined,
+                    size: 48,
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Text(
+                      "Couldn't load your reports. Check your connection and try again.",
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   Center(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Text(
-                        'Could not load your reports: ${snapshot.error}',
-                        textAlign: TextAlign.center,
-                      ),
+                    child: OutlinedButton.icon(
+                      onPressed: _refresh,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Retry'),
                     ),
                   ),
                 ],

@@ -49,7 +49,8 @@ class _CaptureScreenState extends State<CaptureScreen> {
         }
       }
     } catch (e) {
-      setState(() => _error = 'Could not open camera: $e');
+      debugPrint('Could not open camera: $e');
+      setState(() => _error = 'Could not open the camera. Please try again.');
     }
   }
 
@@ -91,8 +92,9 @@ class _CaptureScreenState extends State<CaptureScreen> {
         _locating = false;
       });
     } catch (e) {
+      debugPrint('Could not get location: $e');
       setState(() {
-        _error = 'Could not get location: $e';
+        _error = 'Could not get your location. Please try again.';
         _locating = false;
       });
     }
@@ -137,7 +139,8 @@ class _CaptureScreenState extends State<CaptureScreen> {
         _error = "$e Please retake a photo of the actual issue.";
       });
     } catch (e) {
-      setState(() => _error = 'Could not analyze report: $e');
+      debugPrint('Could not analyze report: $e');
+      setState(() => _error = 'Could not analyze your report. Please check your connection and try again.');
     } finally {
       if (mounted) setState(() => _analyzing = false);
     }

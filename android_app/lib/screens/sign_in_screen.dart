@@ -22,10 +22,11 @@ class _SignInScreenState extends State<SignInScreen> {
         MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
     } catch (e) {
+      debugPrint('Sign-in failed: $e');
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Sign-in failed: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Sign-in failed. Please try again.')),
+      );
     } finally {
       if (mounted) setState(() => _signingIn = false);
     }

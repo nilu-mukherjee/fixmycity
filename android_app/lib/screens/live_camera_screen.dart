@@ -67,7 +67,8 @@ class _LiveCameraScreenState extends State<LiveCameraScreen> {
 
       await controller.startImageStream(_onFrame);
     } catch (e) {
-      setState(() => _error = 'Could not open camera: $e');
+      debugPrint('Could not open camera: $e');
+      setState(() => _error = 'Could not open the camera. Please try again.');
     }
   }
 
@@ -133,8 +134,9 @@ class _LiveCameraScreenState extends State<LiveCameraScreen> {
       if (!mounted) return;
       Navigator.of(context).pop(photo);
     } catch (e) {
+      debugPrint('Could not take photo: $e');
       setState(() {
-        _error = 'Could not take photo: $e';
+        _error = 'Could not take the photo. Please try again.';
         _capturing = false;
       });
     }
