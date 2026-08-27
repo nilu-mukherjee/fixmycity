@@ -7,7 +7,7 @@ import 'package:geolocator/geolocator.dart';
 import '../models/report.dart';
 import '../services/http_report_api.dart';
 import '../services/service_locator.dart';
-import '../widgets/address_text.dart';
+import '../widgets/location_info.dart';
 import 'live_camera_screen.dart';
 import 'presubmit_screen.dart';
 
@@ -249,21 +249,12 @@ class _LocationStatus extends StatelessWidget {
     if (position == null) {
       return const Text('Location will be captured automatically with your photo.');
     }
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Icon(Icons.location_on, size: 18),
-        const SizedBox(width: 4),
-        Expanded(
-          child: AddressText(
-            location: GeoPoint(
-              latitude: position!.latitude,
-              longitude: position!.longitude,
-              accuracyMeters: position!.accuracy,
-            ),
-          ),
-        ),
-      ],
+    return LocationInfo(
+      location: GeoPoint(
+        latitude: position!.latitude,
+        longitude: position!.longitude,
+        accuracyMeters: position!.accuracy,
+      ),
     );
   }
 }

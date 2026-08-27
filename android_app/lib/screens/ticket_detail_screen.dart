@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../models/report.dart';
 import '../utils/maps.dart';
-import '../widgets/address_text.dart';
+import '../widgets/location_info.dart';
 import '../widgets/severity_chip.dart';
 import '../widgets/status_timeline.dart';
 import '../widgets/trust_score_card.dart';
@@ -22,7 +22,7 @@ class TicketDetailScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text(ticket.displayId)),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
@@ -76,28 +76,22 @@ class TicketDetailScreen extends StatelessWidget {
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 12),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.location_on_outlined),
-            title: AddressText(location: ticket.location),
-            subtitle: Text(
-              ticket.location.accuracyMeters == null
-                  ? 'Accuracy unknown'
-                  : '±${ticket.location.accuracyMeters!.toStringAsFixed(0)}m accuracy',
-            ),
-            trailing: const Icon(Icons.open_in_new, size: 18),
+          LocationInfo(
+            location: ticket.location,
             onTap: () => openInMaps(ticket.location),
           ),
           const SizedBox(height: 4),
           TrustScoreCard(score: ticket.trustScore),
-          const SizedBox(height: 24),
-          OutlinedButton.icon(
-            onPressed: () =>
-                Navigator.of(context).popUntil((route) => route.isFirst),
-            icon: const Icon(Icons.arrow_back),
-            label: const Text('Back to My Reports'),
-          ),
         ],
+      ),
+      bottomNavigationBar: SafeArea(
+        minimum: const EdgeInsets.all(16),
+        child: OutlinedButton.icon(
+          onPressed: () =>
+              Navigator.of(context).popUntil((route) => route.isFirst),
+          icon: const Icon(Icons.arrow_back),
+          label: const Text('Back to My Reports'),
+        ),
       ),
     );
   }

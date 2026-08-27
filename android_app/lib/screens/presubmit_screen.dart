@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import '../models/report.dart';
 import '../services/service_locator.dart';
 import '../utils/maps.dart';
-import '../widgets/address_text.dart';
+import '../widgets/location_info.dart';
 import '../widgets/trust_score_card.dart';
 import 'ticket_detail_screen.dart';
 
@@ -73,7 +73,7 @@ class _PresubmitScreenState extends State<PresubmitScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Review Before Submitting')),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
@@ -152,33 +152,29 @@ class _PresubmitScreenState extends State<PresubmitScreen> {
             title: Text(_category.department),
             subtitle: const Text('Routed department (mocked, no real municipal integration)'),
           ),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.location_on_outlined),
-            title: AddressText(location: presubmit.location),
-            subtitle: Text(
-              presubmit.location.accuracyMeters == null
-                  ? 'Accuracy unknown'
-                  : '±${presubmit.location.accuracyMeters!.toStringAsFixed(0)}m accuracy',
-            ),
-            trailing: const Icon(Icons.open_in_new, size: 18),
+          LocationInfo(
+            location: presubmit.location,
             onTap: () => openInMaps(presubmit.location),
           ),
           const SizedBox(height: 16),
           TrustScoreCard(score: presubmit.trustScore),
-          const SizedBox(height: 24),
-          FilledButton.icon(
-            onPressed: _submitting ? null : _approve,
-            icon: _submitting
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.check_circle_outline),
-            label: Text(_submitting ? 'Creating Ticket…' : 'Approve & Create Ticket'),
-          ),
         ],
+      ),
+      // Pinned instead of scrolling with the content, so the primary
+      // action is always reachable without scrolling to the bottom.
+      bottomNavigationBar: SafeArea(
+        minimum: const EdgeInsets.all(16),
+        child: FilledButton.icon(
+          onPressed: _submitting ? null : _approve,
+          icon: _submitting
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.check_circle_outline),
+          label: Text(_submitting ? 'Creating Ticket…' : 'Approve & Create Ticket'),
+        ),
       ),
     );
   }
