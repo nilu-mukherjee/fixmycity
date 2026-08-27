@@ -198,15 +198,25 @@ class _TicketTile extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            '${ticket.displayId} · ${ticket.category.label}',
-                            style: theme.textTheme.titleMedium,
-                            maxLines: 2,
+                            ticket.displayId,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.outline,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         const SizedBox(width: 8),
                         SeverityChip(severity: ticket.severity),
                       ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      ticket.category.label,
+                      style: theme.textTheme.titleMedium,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 6),
                     Row(
