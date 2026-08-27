@@ -46,41 +46,61 @@ class TicketDetailScreen extends StatelessWidget {
             margin: EdgeInsets.zero,
             child: Padding(
               padding: const EdgeInsets.all(16),
-              child: StatusTimeline(status: ticket.status),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                ticket.category.label,
+                                style: Theme.of(context).textTheme.titleLarge,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            SeverityChip(severity: ticket.severity),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        _MetaLine(
+                          icon: Icons.apartment_rounded,
+                          iconColor: Colors.deepPurple,
+                          text: 'Routed to ${ticket.department}',
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          ticket.description,
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodyMedium?.copyWith(fontSize: 13),
+                        ),
+                        const SizedBox(height: 8),
+                        _MetaLine(
+                          icon: Icons.event_rounded,
+                          iconColor: Colors.blue,
+                          text:
+                              'Reported ${DateFormat.yMMMd().add_jm().format(ticket.createdAt)}',
+                        ),
+                        const SizedBox(height: 10),
+                        LocationInfo(
+                          location: ticket.location,
+                          onTap: () => openInMaps(ticket.location),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  StatusTimeline(status: ticket.status, direction: Axis.vertical),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  ticket.category.label,
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-              ),
-              SeverityChip(severity: ticket.severity),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Routed to ${ticket.department}',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(ticket.description),
-          const SizedBox(height: 8),
-          Text(
-            'Reported ${DateFormat.yMMMd().add_jm().format(ticket.createdAt)}',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          const SizedBox(height: 12),
-          LocationInfo(
-            location: ticket.location,
-            onTap: () => openInMaps(ticket.location),
-          ),
-          const SizedBox(height: 4),
           TrustScoreCard(score: ticket.trustScore),
         ],
       ),
@@ -93,6 +113,35 @@ class TicketDetailScreen extends StatelessWidget {
           label: const Text('Back to My Reports'),
         ),
       ),
+    );
+  }
+}
+
+/// A colorful icon + a line of text styled like the "Reported ..." date
+/// line (small, muted) — used for both the department and date rows so
+/// they read consistently.
+class _MetaLine extends StatelessWidget {
+  const _MetaLine({
+    required this.icon,
+    required this.iconColor,
+    required this.text,
+  });
+
+  final IconData icon;
+  final Color iconColor;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 16, color: iconColor),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(text, style: Theme.of(context).textTheme.bodySmall),
+        ),
+      ],
     );
   }
 }
