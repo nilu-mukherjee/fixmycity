@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../models/report.dart';
 
+/// Priority indicator — icon + text, styled like the trust-score line
+/// rather than a button/chip, with color signaling the severity level.
 class SeverityChip extends StatelessWidget {
   const SeverityChip({super.key, required this.severity});
 
@@ -17,14 +19,16 @@ class SeverityChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = _color();
-    return Chip(
-      label: Text(
-        severity.label,
-        style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12),
-      ),
-      backgroundColor: color.withValues(alpha: 0.12),
-      side: BorderSide(color: color.withValues(alpha: 0.4)),
-      visualDensity: VisualDensity.compact,
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.flag_rounded, size: 16, color: color),
+        const SizedBox(width: 4),
+        Text(
+          severity.label,
+          style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12),
+        ),
+      ],
     );
   }
 }
