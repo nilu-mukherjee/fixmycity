@@ -53,19 +53,19 @@ class TicketDetailScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                ticket.category.label,
-                                style: Theme.of(context).textTheme.titleLarge,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            SeverityChip(severity: ticket.severity),
-                          ],
+                        // Full-width line for the title — sharing a Row
+                        // with the chip left too little room once this
+                        // column also had to share space with the vertical
+                        // status tracker, causing "Footpath" to break
+                        // mid-word ("Footpat"/"h").
+                        Text(
+                          ticket.category.label,
+                          style: Theme.of(context).textTheme.titleLarge,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
+                        const SizedBox(height: 4),
+                        SeverityChip(severity: ticket.severity),
                         const SizedBox(height: 6),
                         _MetaLine(
                           icon: Icons.apartment_rounded,
