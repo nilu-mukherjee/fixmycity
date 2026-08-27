@@ -11,8 +11,10 @@ import 'presubmit_screen.dart';
 
 /// Step 1 of the citizen flow (project.md): open the app, start a complaint,
 /// take a plain photo (no on-device/live object detection — that's server-
-/// side via Gemini Vision), capture location and an urgency note, then send
-/// it off for AI classification.
+/// side via Gemini Vision), capture location, then send it off for AI
+/// classification automatically — as soon as both are ready, with no extra
+/// button tap. Category, severity, and description are all editable next,
+/// on [PresubmitScreen]'s form, so there's nothing to fill in here first.
 class CaptureScreen extends StatefulWidget {
   const CaptureScreen({super.key});
 
@@ -21,23 +23,13 @@ class CaptureScreen extends StatefulWidget {
 }
 
 class _CaptureScreenState extends State<CaptureScreen> {
-  final _descriptionController = TextEditingController();
   final _picker = ImagePicker();
 
   XFile? _photo;
   Position? _position;
-  String _urgency = 'Medium';
   bool _locating = false;
-  bool _submitting = false;
+  bool _analyzing = false;
   String? _error;
-
-  static const _urgencyLevels = ['Low', 'Medium', 'High', 'Emergency'];
-
-  @override
-  void dispose() {
-    _descriptionController.dispose();
-    super.dispose();
-  }
 
   Future<void> _takePhoto() async {
     try {
@@ -50,8 +42,14 @@ class _CaptureScreenState extends State<CaptureScreen> {
         imageQuality: 85,
       );
       if (photo != null) {
-        setState(() => _photo = photo);
-        _locateDevice();
+        setState(() {
+          _photo = photo;
+          _error = null;
+        });
+        await _locateDevice();
+        if (_photo != null && _position != null) {
+          await _analyze();
+        }
       }
     } catch (e) {
       setState(() => _error = 'Could not open camera: $e');
@@ -107,7 +105,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
     if (_photo == null || _position == null) return;
 
     setState(() {
-      _submitting = true;
+      _analyzing = true;
       _error = null;
     });
 
@@ -117,13 +115,13 @@ class _CaptureScreenState extends State<CaptureScreen> {
         longitude: _position!.longitude,
         accuracyMeters: _position!.accuracy,
       );
-      final urgencyNote =
-          'Urgency: $_urgency. ${_descriptionController.text.trim()}';
 
       final result = await reportApi.classifyReport(
         photoPath: _photo!.path,
         location: location,
-        urgencyNote: urgencyNote,
+        // No pre-analysis note — the citizen reviews and can rewrite the
+        // AI's description on the presubmit form that comes next.
+        urgencyNote: '',
       );
 
       if (!mounted) return;
@@ -138,67 +136,50 @@ class _CaptureScreenState extends State<CaptureScreen> {
       // Force a retake rather than letting them resubmit the same photo.
       setState(() {
         _photo = null;
+        _position = null;
         _error = "$e Please retake a photo of the actual issue.";
       });
     } catch (e) {
       setState(() => _error = 'Could not analyze report: $e');
     } finally {
-      if (mounted) setState(() => _submitting = false);
+      if (mounted) setState(() => _analyzing = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final canAnalyze = _photo != null && _position != null && !_submitting;
-
     return Scaffold(
       appBar: AppBar(title: const Text('Report an Issue')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _PhotoPicker(photo: _photo, onCamera: _takePhoto),
-          const SizedBox(height: 16),
-          _LocationStatus(position: _position, locating: _locating),
-          const SizedBox(height: 16),
-          Text('Urgency', style: Theme.of(context).textTheme.titleSmall),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            children: [
-              for (final level in _urgencyLevels)
-                ChoiceChip(
-                  label: Text(level),
-                  selected: _urgency == level,
-                  onSelected: (_) => setState(() => _urgency = level),
-                ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _descriptionController,
-            maxLines: 3,
-            decoration: const InputDecoration(
-              labelText: 'Short description (optional)',
-              hintText: 'e.g. Big pothole near Whitefield main road, dangerous for bikes.',
-              border: OutlineInputBorder(),
+      body: _analyzing
+          ? const _AnalyzingView()
+          : ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                _PhotoPicker(photo: _photo, onCamera: _takePhoto),
+                const SizedBox(height: 16),
+                _LocationStatus(position: _position, locating: _locating),
+                if (_error != null) ...[
+                  const SizedBox(height: 12),
+                  Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                ],
+              ],
             ),
-          ),
-          if (_error != null) ...[
-            const SizedBox(height: 12),
-            Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
-          ],
-          const SizedBox(height: 24),
-          FilledButton.icon(
-            onPressed: canAnalyze ? _analyze : null,
-            icon: _submitting
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.auto_awesome),
-            label: Text(_submitting ? 'Analyzing…' : 'Analyze Report'),
-          ),
+    );
+  }
+}
+
+class _AnalyzingView extends StatelessWidget {
+  const _AnalyzingView();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircularProgressIndicator(),
+          SizedBox(height: 16),
+          Text('Analyzing your report…'),
         ],
       ),
     );
