@@ -132,6 +132,25 @@ function trustTotal(score: Doc<'tickets'>['trustScore']): number {
   )
 }
 
+type SortKey = 'category' | 'severity' | 'status' | 'department' | 'trust' | 'reported'
+
+function compareBySortKey(key: SortKey, a: Doc<'tickets'>, b: Doc<'tickets'>): number {
+  switch (key) {
+    case 'category':
+      return CATEGORY_LABEL[a.category].localeCompare(CATEGORY_LABEL[b.category])
+    case 'severity':
+      return SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity)
+    case 'status':
+      return STATUS_PIPELINE.indexOf(a.status) - STATUS_PIPELINE.indexOf(b.status)
+    case 'department':
+      return a.department.localeCompare(b.department)
+    case 'trust':
+      return trustTotal(a.trustScore) - trustTotal(b.trustScore)
+    case 'reported':
+      return a._creationTime - b._creationTime
+  }
+}
+
 function useDarkMode() {
   const [isDark, setIsDark] = useState(() => {
     if (typeof localStorage === 'undefined') return false
@@ -163,16 +182,43 @@ function AdminConsole() {
   )
   const [severityFilter, setSeverityFilter] = useState<Set<Severity>>(new Set())
   const [selectedId, setSelectedId] = useState<Id<'tickets'> | null>(null)
+  const [sortColumn, setSortColumn] = useState<SortKey | null>(null)
+  const [sortAsc, setSortAsc] = useState(true)
+  const [page, setPage] = useState(1)
 
   const filtered = useMemo(() => {
-    return tickets
+    const result = tickets
       .filter((t) => statusFilter.size === 0 || statusFilter.has(t.status))
       .filter((t) => severityFilter.size === 0 || severityFilter.has(t.severity))
-      .sort((a, b) => {
-        const sevDiff = SEVERITY_ORDER.indexOf(b.severity) - SEVERITY_ORDER.indexOf(a.severity)
-        return sevDiff !== 0 ? sevDiff : b._creationTime - a._creationTime
-      })
-  }, [tickets, statusFilter, severityFilter])
+
+    return [...result].sort((a, b) => {
+      if (sortColumn) {
+        const cmp = compareBySortKey(sortColumn, a, b)
+        return sortAsc ? cmp : -cmp
+      }
+      const sevDiff = SEVERITY_ORDER.indexOf(b.severity) - SEVERITY_ORDER.indexOf(a.severity)
+      return sevDiff !== 0 ? sevDiff : b._creationTime - a._creationTime
+    })
+  }, [tickets, statusFilter, severityFilter, sortColumn, sortAsc])
+
+  useEffect(() => {
+    setPage(1)
+  }, [statusFilter, severityFilter])
+
+  const PAGE_SIZE = 10
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const clampedPage = Math.min(page, totalPages)
+  const pageStart = (clampedPage - 1) * PAGE_SIZE
+  const pageRows = filtered.slice(pageStart, pageStart + PAGE_SIZE)
+
+  function handleSort(key: SortKey) {
+    if (sortColumn === key) {
+      setSortAsc((v) => !v)
+    } else {
+      setSortColumn(key)
+      setSortAsc(true)
+    }
+  }
 
   const selected = tickets.find((t) => t._id === selectedId) ?? null
   const openCount = tickets.filter((t) => t.status !== 'resolved').length
@@ -195,80 +241,98 @@ function AdminConsole() {
           toggleDark={toggleDark}
         />
         <main className="mx-auto max-w-(--breakpoint-2xl) p-4 md:p-6">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 xl:grid-cols-4">
-            {SEVERITY_ORDER.map((s) => {
-              const momChange = monthOverMonth(tickets, s)
-              return (
-                <div
-                  key={s}
-                  className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]"
-                >
-                  <p className="text-theme-sm text-gray-500 dark:text-gray-400">
-                    {SEVERITY_LABEL[s]}
+          <div className="mb-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
+            {SEVERITY_ORDER.map((s) => (
+              <PriorityBadge key={s} s={s} tickets={tickets} />
+            ))}
+          </div>
+          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+            <div className="flex flex-col gap-4 border-b border-gray-200 px-4 py-4 sm:px-5 lg:flex-row lg:items-center lg:justify-between dark:border-gray-800">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Reported Issues</h3>
+                <p className="text-theme-sm text-gray-500 dark:text-gray-400">
+                  {filtered.length} issue{filtered.length === 1 ? '' : 's'} matching the filters above
+                </p>
+              </div>
+              <div className="inline-flex h-11 w-full gap-0.5 overflow-x-auto rounded-lg bg-gray-100 p-0.5 sm:w-auto lg:min-w-fit dark:bg-gray-900">
+                <StatusTab
+                  label="All"
+                  active={statusFilter.size === 0}
+                  onClick={() => setStatusFilter(new Set())}
+                />
+                {STATUS_PIPELINE.map((s) => (
+                  <StatusTab
+                    key={s}
+                    label={STATUS_LABEL[s]}
+                    active={statusFilter.size === 1 && statusFilter.has(s)}
+                    onClick={() => setStatusFilter(new Set([s]))}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {ticketsQuery.isLoading ? (
+              <div className="w-full px-4 py-16 sm:px-5">
+                <p className="text-theme-sm text-center text-gray-500 dark:text-gray-400">
+                  Loading queue…
+                </p>
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="w-full px-4 py-16 sm:px-5">
+                <p className="text-theme-sm text-center text-gray-500 dark:text-gray-400">
+                  No issues match these filters.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="w-full overflow-x-auto">
+                  <table className="min-w-full text-left">
+                    <thead>
+                      <tr className="border-b border-gray-100 dark:border-gray-800">
+                        <Th>ID</Th>
+                        <SortableTh label="Issue" sortKey="category" sortColumn={sortColumn} sortAsc={sortAsc} onSort={handleSort} />
+                        <SortableTh label="Severity" sortKey="severity" sortColumn={sortColumn} sortAsc={sortAsc} onSort={handleSort} />
+                        <SortableTh label="Department" sortKey="department" sortColumn={sortColumn} sortAsc={sortAsc} onSort={handleSort} />
+                        <SortableTh label="Trust" sortKey="trust" sortColumn={sortColumn} sortAsc={sortAsc} onSort={handleSort} />
+                        <SortableTh label="Reported" sortKey="reported" sortColumn={sortColumn} sortAsc={sortAsc} onSort={handleSort} />
+                        <SortableTh label="Status" sortKey="status" sortColumn={sortColumn} sortAsc={sortAsc} onSort={handleSort} />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pageRows.map((t) => (
+                        <TicketRow key={t._id} ticket={t} onClick={() => setSelectedId(t._id)} />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="flex flex-col items-center justify-between gap-3 border-t border-gray-200 px-4 py-4 sm:flex-row sm:px-5 dark:border-gray-800">
+                  <p className="text-theme-xs text-gray-500 dark:text-gray-400">
+                    Showing {pageRows.length === 0 ? 0 : pageStart + 1}–{pageStart + pageRows.length} of {filtered.length}
                   </p>
-                  <div className="mt-3 flex items-end justify-between">
-                    <div>
-                      <h4 className="text-2xl font-bold text-gray-800 dark:text-white/90">
-                        {tickets.filter((t) => t.severity === s).length}
-                      </h4>
-                    </div>
-                    <MonthOverMonthBadge change={momChange} />
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      disabled={clampedPage <= 1}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      className="shadow-theme-xs rounded-lg border border-gray-300 bg-white px-3 py-2 text-theme-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03]"
+                    >
+                      Previous
+                    </button>
+                    <span className="text-theme-sm text-gray-500 dark:text-gray-400">
+                      Page {clampedPage} of {totalPages}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={clampedPage >= totalPages}
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      className="shadow-theme-xs rounded-lg border border-gray-300 bg-white px-3 py-2 text-theme-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03]"
+                    >
+                      Next
+                    </button>
                   </div>
                 </div>
-              )
-            })}
-          </div>
-
-          <div className="mb-5 flex flex-wrap gap-2">
-            {STATUS_PIPELINE.map((s) => (
-              <FilterChip
-                key={s}
-                active={statusFilter.has(s)}
-                label={STATUS_LABEL[s]}
-                onClick={() => toggle(statusFilter, s, setStatusFilter)}
-              />
-            ))}
-            <span className="mx-1 w-px bg-gray-200 dark:bg-gray-800" />
-            {SEVERITY_ORDER.map((s) => (
-              <FilterChip
-                key={s}
-                active={severityFilter.has(s)}
-                label={SEVERITY_LABEL[s]}
-                onClick={() => toggle(severityFilter, s, setSeverityFilter)}
-              />
-            ))}
-          </div>
-
-          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
-            {ticketsQuery.isLoading ? (
-              <p className="text-theme-sm py-16 text-center text-gray-500 dark:text-gray-400">
-                Loading queue…
-              </p>
-            ) : filtered.length === 0 ? (
-              <p className="text-theme-sm py-16 text-center text-gray-500 dark:text-gray-400">
-                No issues match these filters.
-              </p>
-            ) : (
-              <div className="w-full overflow-x-auto">
-                <table className="min-w-full text-left">
-                  <thead>
-                    <tr className="border-b border-gray-100 dark:border-gray-800">
-                      <Th>ID</Th>
-                      <Th>Issue</Th>
-                      <Th>Severity</Th>
-                      <Th>Status</Th>
-                      <Th>Department</Th>
-                      <Th>Trust</Th>
-                      <Th>Reported</Th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filtered.map((t) => (
-                      <TicketRow key={t._id} ticket={t} onClick={() => setSelectedId(t._id)} />
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              </>
             )}
           </div>
         </main>
@@ -390,8 +454,8 @@ function RailIcon({
         disabled={!active}
         aria-label={label}
         className={`flex h-11 w-11 items-center justify-center rounded-lg transition-colors ${active
-            ? 'bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-400'
-            : 'cursor-not-allowed text-gray-400 dark:text-gray-600'
+          ? 'bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-400'
+          : 'cursor-not-allowed text-gray-400 dark:text-gray-600'
           }`}
       >
         <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -415,6 +479,109 @@ function Th({ children }: { children: React.ReactNode }) {
   )
 }
 
+function SortableTh({
+  label,
+  sortKey,
+  sortColumn,
+  sortAsc,
+  onSort,
+}: {
+  label: string
+  sortKey: SortKey
+  sortColumn: SortKey | null
+  sortAsc: boolean
+  onSort: (key: SortKey) => void
+}) {
+  const isActive = sortColumn === sortKey
+  return (
+    <th className="px-5 py-3 first:pl-6 last:pr-6">
+      <button
+        type="button"
+        onClick={() => onSort(sortKey)}
+        className="flex items-center gap-1.5 text-theme-xs font-medium text-gray-500 uppercase dark:text-gray-400"
+      >
+        {label}
+        <span className="flex flex-col gap-0.5">
+          <svg
+            width="8"
+            height="5"
+            viewBox="0 0 8 5"
+            fill="none"
+            className={isActive && sortAsc ? 'text-gray-600 dark:text-gray-300' : 'text-gray-300 dark:text-gray-700'}
+          >
+            <path
+              d="M4.40962 0.585167C4.21057 0.300808 3.78943 0.300807 3.59038 0.585166L1.05071 4.21327C0.81874 4.54466 1.05582 5 1.46033 5H6.53967C6.94418 5 7.18126 4.54466 6.94929 4.21327L4.40962 0.585167Z"
+              fill="currentColor"
+            />
+          </svg>
+          <svg
+            width="8"
+            height="5"
+            viewBox="0 0 8 5"
+            fill="none"
+            className={isActive && !sortAsc ? 'text-gray-600 dark:text-gray-300' : 'text-gray-300 dark:text-gray-700'}
+          >
+            <path
+              d="M4.40962 4.41483C4.21057 4.69919 3.78943 4.69919 3.59038 4.41483L1.05071 0.786732C0.81874 0.455343 1.05582 0 1.46033 0H6.53967C6.94418 0 7.18126 0.455342 6.94929 0.786731L4.40962 4.41483Z"
+              fill="currentColor"
+            />
+          </svg>
+        </span>
+      </button>
+    </th>
+  )
+}
+
+function PriorityBadge({
+  s,
+  tickets,
+}: {
+  s: Severity
+  tickets: Array<Doc<'tickets'>>
+}) {
+  const momChange = monthOverMonth(tickets, s)
+
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
+      <p className="text-theme-sm text-gray-500 dark:text-gray-400">
+        {SEVERITY_LABEL[s]}
+      </p>
+      <div className="mt-3 flex items-end justify-between">
+        <div>
+          <h4 className="text-2xl font-bold text-gray-800 dark:text-white/90">
+            {tickets.filter((t) => t.severity === s).length}
+          </h4>
+        </div>
+        <MonthOverMonthBadge change={momChange} />
+      </div>
+    </div>
+  )
+}
+
+function StatusTab({
+  active,
+  label,
+  onClick,
+}: {
+  active: boolean
+  label: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`text-theme-sm h-10 flex-1 rounded-md px-2 py-2 font-medium whitespace-nowrap sm:px-3 lg:flex-initial ${
+        active
+          ? 'bg-white text-gray-900 shadow-theme-xs dark:bg-gray-800 dark:text-white'
+          : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+      }`}
+    >
+      {label}
+    </button>
+  )
+}
+
 function FilterChip({
   active,
   label,
@@ -429,8 +596,8 @@ function FilterChip({
       type="button"
       onClick={onClick}
       className={`text-theme-sm inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 font-medium transition-colors ${active
-          ? 'border-brand-500 bg-brand-50 text-brand-700 dark:border-brand-500 dark:bg-brand-500/15 dark:text-brand-400'
-          : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50 dark:border-gray-800 dark:bg-white/[0.03] dark:text-gray-400 dark:hover:bg-white/5'
+        ? 'border-brand-500 bg-brand-50 text-brand-700 dark:border-brand-500 dark:bg-brand-500/15 dark:text-brand-400'
+        : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50 dark:border-gray-800 dark:bg-white/[0.03] dark:text-gray-400 dark:hover:bg-white/5'
         }`}
     >
       {label}
@@ -477,13 +644,36 @@ function MonthOverMonthBadge({ change }: { change: MonthOverMonth }) {
   )
 }
 
-function Badge({ tone, children }: { tone: string; children: React.ReactNode }) {
+function Badge({
+  tone,
+  icon,
+  children,
+}: {
+  tone: string
+  icon?: React.ReactNode
+  children: React.ReactNode
+}) {
   return (
     <span
-      className={`text-theme-xs inline-flex items-center rounded-full px-2.5 py-1 font-medium whitespace-nowrap ${tone}`}
+      className={`text-theme-xs inline-flex items-center gap-1 rounded-full px-2.5 py-1 font-medium whitespace-nowrap ${tone}`}
     >
+      {icon}
       {children}
     </span>
+  )
+}
+
+/** TailAdmin's "Light Background with Left Icon" badge alert glyph — a filled triangle, fitting for a severity indicator. */
+function AlertIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="fill-current" xmlns="http://www.w3.org/2000/svg">
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M6.00012 1.25C6.27346 1.25 6.52462 1.39908 6.65597 1.63875L11.156 9.63875C11.2833 9.87105 11.2792 10.1536 11.1452 10.382C11.0112 10.6104 10.7658 10.75 10.5001 10.75H1.50012C1.23448 10.75 0.989039 10.6104 0.855068 10.382C0.721097 10.1536 0.716918 9.87105 0.844287 9.63875L5.34429 1.63875C5.47563 1.39908 5.72679 1.25 6.00012 1.25ZM6.00012 4.25C6.34531 4.25 6.62512 4.52982 6.62512 4.875V6.875C6.62512 7.22018 6.34531 7.5 6.00012 7.5C5.65494 7.5 5.37512 7.22018 5.37512 6.875V4.875C5.37512 4.52982 5.65494 4.25 6.00012 4.25ZM6.00012 9.25C6.41434 9.25 6.75012 8.91422 6.75012 8.5C6.75012 8.08579 6.41434 7.75 6.00012 7.75C5.58591 7.75 5.25012 8.08579 5.25012 8.5C5.25012 8.91422 5.58591 9.25 6.00012 9.25Z"
+        fill=""
+      />
+    </svg>
   )
 }
 
@@ -519,10 +709,9 @@ function TicketRow({ ticket, onClick }: { ticket: Doc<'tickets'>; onClick: () =>
         </div>
       </td>
       <td className="px-5 py-4">
-        <Badge tone={SEVERITY_BADGE[ticket.severity]}>{SEVERITY_LABEL[ticket.severity]}</Badge>
-      </td>
-      <td className="px-5 py-4">
-        <Badge tone={STATUS_BADGE[ticket.status]}>{STATUS_LABEL[ticket.status]}</Badge>
+        <Badge tone={SEVERITY_BADGE[ticket.severity]} icon={<AlertIcon />}>
+          {SEVERITY_LABEL[ticket.severity]}
+        </Badge>
       </td>
       <td className="text-theme-sm px-5 py-4 text-gray-600 dark:text-gray-300">
         {ticket.department}
@@ -532,6 +721,9 @@ function TicketRow({ ticket, onClick }: { ticket: Doc<'tickets'>; onClick: () =>
       </td>
       <td className="text-theme-xs px-5 py-4 pr-6 whitespace-nowrap text-gray-400 dark:text-gray-500">
         {relativeTime(ticket._creationTime)}
+      </td>
+      <td className="px-5 py-4">
+        <Badge tone={STATUS_BADGE[ticket.status]}>{STATUS_LABEL[ticket.status]}</Badge>
       </td>
     </tr>
   )
@@ -605,7 +797,9 @@ function DetailPanel({ ticket, onClose }: { ticket: Doc<'tickets'>; onClose: () 
 
         <div className="flex flex-col gap-6 p-6">
           <div className="flex items-center gap-2">
-            <Badge tone={SEVERITY_BADGE[ticket.severity]}>{SEVERITY_LABEL[ticket.severity]}</Badge>
+            <Badge tone={SEVERITY_BADGE[ticket.severity]} icon={<AlertIcon />}>
+          {SEVERITY_LABEL[ticket.severity]}
+        </Badge>
             <Badge tone={STATUS_BADGE[ticket.status]}>{STATUS_LABEL[ticket.status]}</Badge>
           </div>
 
