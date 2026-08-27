@@ -57,7 +57,7 @@ class TicketDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Expanded(
                         child: Column(
@@ -66,21 +66,22 @@ class TicketDetailScreen extends StatelessWidget {
                             _MetaLine(
                               icon: Icons.event_rounded,
                               iconColor: Colors.blue,
-                              text:
-                                  'Reported ${DateFormat.yMMMd().add_jm().format(ticket.createdAt)}',
+                              text: DateFormat.yMMMd().add_jm().format(
+                                ticket.createdAt,
+                              ),
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 12),
                             _MetaLine(
                               icon: Icons.apartment_rounded,
                               iconColor: Colors.deepPurple,
-                              text: 'Routed to ${ticket.department}',
+                              text: ticket.department,
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 12),
                             SeverityChip(severity: ticket.severity),
                           ],
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: 28),
                       StatusTimeline(status: ticket.status, direction: Axis.vertical),
                     ],
                   ),
@@ -117,9 +118,8 @@ class TicketDetailScreen extends StatelessWidget {
   }
 }
 
-/// A colorful icon + a line of text styled like the "Reported ..." date
-/// line (small, muted) — used for both the department and date rows so
-/// they read consistently.
+/// A colorful icon + a line of text (small, muted) — used for both the
+/// date and department rows so they read consistently.
 class _MetaLine extends StatelessWidget {
   const _MetaLine({
     required this.icon,
