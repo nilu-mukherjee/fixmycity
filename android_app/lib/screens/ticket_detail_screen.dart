@@ -33,7 +33,9 @@ class TicketDetailScreen extends StatelessWidget {
                   : ticket.photoGcsObjectName.isNotEmpty
                   ? Image.network(ticket.photoUrl, fit: BoxFit.cover)
                   : ColoredBox(
-                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                      color: Theme.of(context)
+                          .colorScheme
+                          .surfaceContainerHighest,
                       child: Icon(
                         Icons.image_not_supported_outlined,
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -82,15 +84,17 @@ class TicketDetailScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 28),
-                      StatusTimeline(status: ticket.status, direction: Axis.vertical),
+                      StatusTimeline(
+                        status: ticket.status,
+                        direction: Axis.vertical,
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
                   Text(
                     ticket.description,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium?.copyWith(fontSize: 13),
+                    style: Theme.of(context).textTheme.bodyMedium
+                        ?.copyWith(fontSize: 13),
                   ),
                   const SizedBox(height: 10),
                   LocationInfo(
@@ -139,7 +143,12 @@ class _MetaLine extends StatelessWidget {
         Icon(icon, size: 16, color: iconColor),
         const SizedBox(width: 6),
         Expanded(
-          child: Text(text, style: Theme.of(context).textTheme.bodySmall),
+          child: Text(
+            text,
+            style: Theme.of(context).textTheme.bodySmall,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ],
     );
