@@ -19,6 +19,22 @@ class FixMyCityApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
         useMaterial3: true,
       ),
+      // A system font size past ~130% breaks fixed-layout widgets like
+      // ListTile (title/subtitle wrap awkwardly, leaving dead space next to
+      // trailing widgets) — clamp rather than let card layouts fall apart,
+      // while still honoring most of the user's accessibility preference.
+      builder: (context, child) {
+        final mediaQuery = MediaQuery.of(context);
+        return MediaQuery(
+          data: mediaQuery.copyWith(
+            textScaler: mediaQuery.textScaler.clamp(
+              minScaleFactor: 0.85,
+              maxScaleFactor: 1.3,
+            ),
+          ),
+          child: child!,
+        );
+      },
       home: const _AuthGate(),
     );
   }
