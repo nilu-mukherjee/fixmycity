@@ -1,0 +1,4 @@
+storePassword=
+keyPassword=
+keyAlias=fixmycity
+storeFile=fixmycity-release.keystore

@@ -16,7 +16,12 @@ export const auth = betterAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     },
   },
-  // Lets the Flutter app authenticate via `Authorization: Bearer <token>`
-  // instead of cookies — it has no cookie jar.
-  plugins: [tanstackStartCookies(), bearer()],
+  // bearer() must come before tanstackStartCookies() — its after-hook reads
+  // the raw `set-cookie` response header to emit `set-auth-token` (for the
+  // Flutter app, which has no cookie jar), and tanstackStartCookies() drains
+  // that header into the framework's own cookie store. If the cookie plugin
+  // runs first, bearer() sees nothing and no token reaches the client — this
+  // is also what Better Auth's own startup warning about plugin order was
+  // pointing at.
+  plugins: [bearer(), tanstackStartCookies()],
 })
