@@ -39,10 +39,13 @@ class _CaptureScreenState extends State<CaptureScreen> {
     super.dispose();
   }
 
-  Future<void> _pickPhoto(ImageSource source) async {
+  Future<void> _takePhoto() async {
     try {
       final photo = await _picker.pickImage(
-        source: source,
+        // Camera only, deliberately — a report's location is tied to where
+        // the photo was taken, so a gallery pick (an old photo, or one from
+        // somewhere else entirely) would attach the wrong place to the issue.
+        source: ImageSource.camera,
         maxWidth: 1600,
         imageQuality: 85,
       );
@@ -51,7 +54,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
         _locateDevice();
       }
     } catch (e) {
-      setState(() => _error = 'Could not open camera/gallery: $e');
+      setState(() => _error = 'Could not open camera: $e');
     }
   }
 
@@ -153,11 +156,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _PhotoPicker(
-            photo: _photo,
-            onCamera: () => _pickPhoto(ImageSource.camera),
-            onGallery: () => _pickPhoto(ImageSource.gallery),
-          ),
+          _PhotoPicker(photo: _photo, onCamera: _takePhoto),
           const SizedBox(height: 16),
           _LocationStatus(position: _position, locating: _locating),
           const SizedBox(height: 16),
@@ -207,15 +206,10 @@ class _CaptureScreenState extends State<CaptureScreen> {
 }
 
 class _PhotoPicker extends StatelessWidget {
-  const _PhotoPicker({
-    required this.photo,
-    required this.onCamera,
-    required this.onGallery,
-  });
+  const _PhotoPicker({required this.photo, required this.onCamera});
 
   final XFile? photo;
   final VoidCallback onCamera;
-  final VoidCallback onGallery;
 
   @override
   Widget build(BuildContext context) {
@@ -237,24 +231,13 @@ class _PhotoPicker extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: onCamera,
-                icon: const Icon(Icons.camera_alt_outlined),
-                label: const Text('Camera'),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: onGallery,
-                icon: const Icon(Icons.photo_library_outlined),
-                label: const Text('Gallery'),
-              ),
-            ),
-          ],
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: onCamera,
+            icon: const Icon(Icons.camera_alt_outlined),
+            label: Text(photo == null ? 'Take Photo' : 'Retake Photo'),
+          ),
         ),
       ],
     );
