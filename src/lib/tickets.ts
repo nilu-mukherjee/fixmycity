@@ -55,12 +55,28 @@ export async function createTicket(input: {
   longitude: number
   accuracyMeters?: number
   trustScore: TrustScoreInput
+  /**
+   * Gemini's original suggestion, before any citizen edits on the
+   * presubmit screen — null when the source draft couldn't be found.
+   * Stored alongside the (possibly-edited) fields above as the
+   * self-improvement feedback signal: compare `category` to
+   * `aiCategory`, etc. to see where the AI's classification and the
+   * citizen's correction diverged.
+   */
+  ai: {
+    category: IssueCategory
+    severity: Severity
+    description: string
+  } | null
 }): Promise<Ticket> {
-  const { trustScore, ...rest } = input
+  const { trustScore, ai, ...rest } = input
   return await prisma.ticket.create({
     data: {
       ...rest,
       ...trustScore,
+      aiCategory: ai?.category,
+      aiSeverity: ai?.severity,
+      aiDescription: ai?.description,
       status: 'received',
     },
   })

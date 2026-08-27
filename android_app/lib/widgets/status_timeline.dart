@@ -26,10 +26,16 @@ class StatusTimeline extends StatelessWidget {
                     : Theme.of(context).colorScheme.outlineVariant,
               ),
             ),
-          _StepDot(
-            label: steps[i].label,
-            isDone: i < currentIndex,
-            isCurrent: i == currentIndex,
+          // Flex, not a fixed width — a fixed 64dp per label imposed a
+          // 320dp minimum row width that didn't fit narrower screens
+          // (overflowed past the edge on the A34).
+          Expanded(
+            flex: 2,
+            child: _StepDot(
+              label: steps[i].label,
+              isDone: i < currentIndex,
+              isCurrent: i == currentIndex,
+            ),
           ),
         ],
       ],
@@ -64,16 +70,15 @@ class _StepDot extends StatelessWidget {
               : null,
         ),
         const SizedBox(height: 4),
-        SizedBox(
-          width: 64,
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
-              color: active ? scheme.onSurface : scheme.onSurfaceVariant,
-            ),
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+            color: active ? scheme.onSurface : scheme.onSurfaceVariant,
           ),
         ),
       ],

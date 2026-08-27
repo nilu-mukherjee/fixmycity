@@ -127,6 +127,15 @@ model Ticket {
   longitude      Float
   accuracyMeters Float?
 
+  // What Gemini originally suggested on the presubmit draft, captured
+  // alongside the citizen's (possibly edited) final values above — the
+  // feedback signal for improving the classification prompt later. Null
+  // when the draft this ticket came from can't be found (shouldn't happen
+  // in practice, but the draft is a separate row, not a hard FK).
+  aiCategory    IssueCategory?
+  aiSeverity    Severity?
+  aiDescription String?
+
   clearImagePoints    Int
   exactLocationPoints Int
   nearbyReportsPoints Int

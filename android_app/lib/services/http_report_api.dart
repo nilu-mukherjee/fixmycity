@@ -114,6 +114,7 @@ class HttpReportApi implements ReportApi {
 
     final json =
         await _call('createTicket', {
+              'draftId': draftId,
               'photoGcsObjectName': 'reports/$draftId.jpg',
               'category': presubmit.category.apiValue,
               'severity': presubmit.severity.apiValue,

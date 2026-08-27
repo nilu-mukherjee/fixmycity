@@ -143,6 +143,7 @@ export const createTicket = os
   .use(requireCitizen)
   .input(
     z.object({
+      draftId: z.string(),
       photoGcsObjectName: z.string(),
       category: z.enum(CATEGORIES),
       severity: z.enum(SEVERITIES),
@@ -156,8 +157,23 @@ export const createTicket = os
     }),
   )
   .handler(async ({ input, context }) => {
+    const { draftId, ...rest } = input
+    // The draft's own category/severity/description are Gemini's original
+    // suggestion — `rest` carries whatever the citizen approved, which may
+    // have been edited on the presubmit screen. Diffing the two after the
+    // fact is the feedback signal described in the "self-improving" plan.
+    const draft = await getDraftRecord(draftId)
+    const ai =
+      draft?.category && draft.severity && draft.description
+        ? {
+            category: draft.category,
+            severity: draft.severity,
+            description: draft.description,
+          }
+        : null
+
     return toWireTicket(
-      await createTicketRecord({ ...input, citizenId: context.userId }),
+      await createTicketRecord({ ...rest, ai, citizenId: context.userId }),
     )
   })
 

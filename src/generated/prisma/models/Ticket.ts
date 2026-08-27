@@ -61,6 +61,9 @@ export type TicketMinAggregateOutputType = {
   latitude: number | null
   longitude: number | null
   accuracyMeters: number | null
+  aiCategory: $Enums.IssueCategory | null
+  aiSeverity: $Enums.Severity | null
+  aiDescription: string | null
   clearImagePoints: number | null
   exactLocationPoints: number | null
   nearbyReportsPoints: number | null
@@ -83,6 +86,9 @@ export type TicketMaxAggregateOutputType = {
   latitude: number | null
   longitude: number | null
   accuracyMeters: number | null
+  aiCategory: $Enums.IssueCategory | null
+  aiSeverity: $Enums.Severity | null
+  aiDescription: string | null
   clearImagePoints: number | null
   exactLocationPoints: number | null
   nearbyReportsPoints: number | null
@@ -105,6 +111,9 @@ export type TicketCountAggregateOutputType = {
   latitude: number
   longitude: number
   accuracyMeters: number
+  aiCategory: number
+  aiSeverity: number
+  aiDescription: number
   clearImagePoints: number
   exactLocationPoints: number
   nearbyReportsPoints: number
@@ -151,6 +160,9 @@ export type TicketMinAggregateInputType = {
   latitude?: true
   longitude?: true
   accuracyMeters?: true
+  aiCategory?: true
+  aiSeverity?: true
+  aiDescription?: true
   clearImagePoints?: true
   exactLocationPoints?: true
   nearbyReportsPoints?: true
@@ -173,6 +185,9 @@ export type TicketMaxAggregateInputType = {
   latitude?: true
   longitude?: true
   accuracyMeters?: true
+  aiCategory?: true
+  aiSeverity?: true
+  aiDescription?: true
   clearImagePoints?: true
   exactLocationPoints?: true
   nearbyReportsPoints?: true
@@ -195,6 +210,9 @@ export type TicketCountAggregateInputType = {
   latitude?: true
   longitude?: true
   accuracyMeters?: true
+  aiCategory?: true
+  aiSeverity?: true
+  aiDescription?: true
   clearImagePoints?: true
   exactLocationPoints?: true
   nearbyReportsPoints?: true
@@ -304,6 +322,9 @@ export type TicketGroupByOutputType = {
   latitude: number
   longitude: number
   accuracyMeters: number | null
+  aiCategory: $Enums.IssueCategory | null
+  aiSeverity: $Enums.Severity | null
+  aiDescription: string | null
   clearImagePoints: number
   exactLocationPoints: number
   nearbyReportsPoints: number
@@ -349,6 +370,9 @@ export type TicketWhereInput = {
   latitude?: Prisma.FloatFilter<"Ticket"> | number
   longitude?: Prisma.FloatFilter<"Ticket"> | number
   accuracyMeters?: Prisma.FloatNullableFilter<"Ticket"> | number | null
+  aiCategory?: Prisma.EnumIssueCategoryNullableFilter<"Ticket"> | $Enums.IssueCategory | null
+  aiSeverity?: Prisma.EnumSeverityNullableFilter<"Ticket"> | $Enums.Severity | null
+  aiDescription?: Prisma.StringNullableFilter<"Ticket"> | string | null
   clearImagePoints?: Prisma.IntFilter<"Ticket"> | number
   exactLocationPoints?: Prisma.IntFilter<"Ticket"> | number
   nearbyReportsPoints?: Prisma.IntFilter<"Ticket"> | number
@@ -372,6 +396,9 @@ export type TicketOrderByWithRelationInput = {
   latitude?: Prisma.SortOrder
   longitude?: Prisma.SortOrder
   accuracyMeters?: Prisma.SortOrderInput | Prisma.SortOrder
+  aiCategory?: Prisma.SortOrderInput | Prisma.SortOrder
+  aiSeverity?: Prisma.SortOrderInput | Prisma.SortOrder
+  aiDescription?: Prisma.SortOrderInput | Prisma.SortOrder
   clearImagePoints?: Prisma.SortOrder
   exactLocationPoints?: Prisma.SortOrder
   nearbyReportsPoints?: Prisma.SortOrder
@@ -398,6 +425,9 @@ export type TicketWhereUniqueInput = Prisma.AtLeast<{
   latitude?: Prisma.FloatFilter<"Ticket"> | number
   longitude?: Prisma.FloatFilter<"Ticket"> | number
   accuracyMeters?: Prisma.FloatNullableFilter<"Ticket"> | number | null
+  aiCategory?: Prisma.EnumIssueCategoryNullableFilter<"Ticket"> | $Enums.IssueCategory | null
+  aiSeverity?: Prisma.EnumSeverityNullableFilter<"Ticket"> | $Enums.Severity | null
+  aiDescription?: Prisma.StringNullableFilter<"Ticket"> | string | null
   clearImagePoints?: Prisma.IntFilter<"Ticket"> | number
   exactLocationPoints?: Prisma.IntFilter<"Ticket"> | number
   nearbyReportsPoints?: Prisma.IntFilter<"Ticket"> | number
@@ -421,6 +451,9 @@ export type TicketOrderByWithAggregationInput = {
   latitude?: Prisma.SortOrder
   longitude?: Prisma.SortOrder
   accuracyMeters?: Prisma.SortOrderInput | Prisma.SortOrder
+  aiCategory?: Prisma.SortOrderInput | Prisma.SortOrder
+  aiSeverity?: Prisma.SortOrderInput | Prisma.SortOrder
+  aiDescription?: Prisma.SortOrderInput | Prisma.SortOrder
   clearImagePoints?: Prisma.SortOrder
   exactLocationPoints?: Prisma.SortOrder
   nearbyReportsPoints?: Prisma.SortOrder
@@ -451,6 +484,9 @@ export type TicketScalarWhereWithAggregatesInput = {
   latitude?: Prisma.FloatWithAggregatesFilter<"Ticket"> | number
   longitude?: Prisma.FloatWithAggregatesFilter<"Ticket"> | number
   accuracyMeters?: Prisma.FloatNullableWithAggregatesFilter<"Ticket"> | number | null
+  aiCategory?: Prisma.EnumIssueCategoryNullableWithAggregatesFilter<"Ticket"> | $Enums.IssueCategory | null
+  aiSeverity?: Prisma.EnumSeverityNullableWithAggregatesFilter<"Ticket"> | $Enums.Severity | null
+  aiDescription?: Prisma.StringNullableWithAggregatesFilter<"Ticket"> | string | null
   clearImagePoints?: Prisma.IntWithAggregatesFilter<"Ticket"> | number
   exactLocationPoints?: Prisma.IntWithAggregatesFilter<"Ticket"> | number
   nearbyReportsPoints?: Prisma.IntWithAggregatesFilter<"Ticket"> | number
@@ -472,6 +508,9 @@ export type TicketCreateInput = {
   latitude: number
   longitude: number
   accuracyMeters?: number | null
+  aiCategory?: $Enums.IssueCategory | null
+  aiSeverity?: $Enums.Severity | null
+  aiDescription?: string | null
   clearImagePoints: number
   exactLocationPoints: number
   nearbyReportsPoints: number
@@ -495,6 +534,9 @@ export type TicketUncheckedCreateInput = {
   latitude: number
   longitude: number
   accuracyMeters?: number | null
+  aiCategory?: $Enums.IssueCategory | null
+  aiSeverity?: $Enums.Severity | null
+  aiDescription?: string | null
   clearImagePoints: number
   exactLocationPoints: number
   nearbyReportsPoints: number
@@ -515,6 +557,9 @@ export type TicketUpdateInput = {
   latitude?: Prisma.FloatFieldUpdateOperationsInput | number
   longitude?: Prisma.FloatFieldUpdateOperationsInput | number
   accuracyMeters?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  aiCategory?: Prisma.NullableEnumIssueCategoryFieldUpdateOperationsInput | $Enums.IssueCategory | null
+  aiSeverity?: Prisma.NullableEnumSeverityFieldUpdateOperationsInput | $Enums.Severity | null
+  aiDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clearImagePoints?: Prisma.IntFieldUpdateOperationsInput | number
   exactLocationPoints?: Prisma.IntFieldUpdateOperationsInput | number
   nearbyReportsPoints?: Prisma.IntFieldUpdateOperationsInput | number
@@ -538,6 +583,9 @@ export type TicketUncheckedUpdateInput = {
   latitude?: Prisma.FloatFieldUpdateOperationsInput | number
   longitude?: Prisma.FloatFieldUpdateOperationsInput | number
   accuracyMeters?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  aiCategory?: Prisma.NullableEnumIssueCategoryFieldUpdateOperationsInput | $Enums.IssueCategory | null
+  aiSeverity?: Prisma.NullableEnumSeverityFieldUpdateOperationsInput | $Enums.Severity | null
+  aiDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clearImagePoints?: Prisma.IntFieldUpdateOperationsInput | number
   exactLocationPoints?: Prisma.IntFieldUpdateOperationsInput | number
   nearbyReportsPoints?: Prisma.IntFieldUpdateOperationsInput | number
@@ -560,6 +608,9 @@ export type TicketCreateManyInput = {
   latitude: number
   longitude: number
   accuracyMeters?: number | null
+  aiCategory?: $Enums.IssueCategory | null
+  aiSeverity?: $Enums.Severity | null
+  aiDescription?: string | null
   clearImagePoints: number
   exactLocationPoints: number
   nearbyReportsPoints: number
@@ -580,6 +631,9 @@ export type TicketUpdateManyMutationInput = {
   latitude?: Prisma.FloatFieldUpdateOperationsInput | number
   longitude?: Prisma.FloatFieldUpdateOperationsInput | number
   accuracyMeters?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  aiCategory?: Prisma.NullableEnumIssueCategoryFieldUpdateOperationsInput | $Enums.IssueCategory | null
+  aiSeverity?: Prisma.NullableEnumSeverityFieldUpdateOperationsInput | $Enums.Severity | null
+  aiDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clearImagePoints?: Prisma.IntFieldUpdateOperationsInput | number
   exactLocationPoints?: Prisma.IntFieldUpdateOperationsInput | number
   nearbyReportsPoints?: Prisma.IntFieldUpdateOperationsInput | number
@@ -602,6 +656,9 @@ export type TicketUncheckedUpdateManyInput = {
   latitude?: Prisma.FloatFieldUpdateOperationsInput | number
   longitude?: Prisma.FloatFieldUpdateOperationsInput | number
   accuracyMeters?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  aiCategory?: Prisma.NullableEnumIssueCategoryFieldUpdateOperationsInput | $Enums.IssueCategory | null
+  aiSeverity?: Prisma.NullableEnumSeverityFieldUpdateOperationsInput | $Enums.Severity | null
+  aiDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clearImagePoints?: Prisma.IntFieldUpdateOperationsInput | number
   exactLocationPoints?: Prisma.IntFieldUpdateOperationsInput | number
   nearbyReportsPoints?: Prisma.IntFieldUpdateOperationsInput | number
@@ -634,6 +691,9 @@ export type TicketCountOrderByAggregateInput = {
   latitude?: Prisma.SortOrder
   longitude?: Prisma.SortOrder
   accuracyMeters?: Prisma.SortOrder
+  aiCategory?: Prisma.SortOrder
+  aiSeverity?: Prisma.SortOrder
+  aiDescription?: Prisma.SortOrder
   clearImagePoints?: Prisma.SortOrder
   exactLocationPoints?: Prisma.SortOrder
   nearbyReportsPoints?: Prisma.SortOrder
@@ -667,6 +727,9 @@ export type TicketMaxOrderByAggregateInput = {
   latitude?: Prisma.SortOrder
   longitude?: Prisma.SortOrder
   accuracyMeters?: Prisma.SortOrder
+  aiCategory?: Prisma.SortOrder
+  aiSeverity?: Prisma.SortOrder
+  aiDescription?: Prisma.SortOrder
   clearImagePoints?: Prisma.SortOrder
   exactLocationPoints?: Prisma.SortOrder
   nearbyReportsPoints?: Prisma.SortOrder
@@ -689,6 +752,9 @@ export type TicketMinOrderByAggregateInput = {
   latitude?: Prisma.SortOrder
   longitude?: Prisma.SortOrder
   accuracyMeters?: Prisma.SortOrder
+  aiCategory?: Prisma.SortOrder
+  aiSeverity?: Prisma.SortOrder
+  aiDescription?: Prisma.SortOrder
   clearImagePoints?: Prisma.SortOrder
   exactLocationPoints?: Prisma.SortOrder
   nearbyReportsPoints?: Prisma.SortOrder
@@ -775,6 +841,14 @@ export type NullableFloatFieldUpdateOperationsInput = {
   divide?: number
 }
 
+export type NullableEnumIssueCategoryFieldUpdateOperationsInput = {
+  set?: $Enums.IssueCategory | null
+}
+
+export type NullableEnumSeverityFieldUpdateOperationsInput = {
+  set?: $Enums.Severity | null
+}
+
 export type IntFieldUpdateOperationsInput = {
   set?: number
   increment?: number
@@ -799,6 +873,9 @@ export type TicketCreateWithoutCitizenInput = {
   latitude: number
   longitude: number
   accuracyMeters?: number | null
+  aiCategory?: $Enums.IssueCategory | null
+  aiSeverity?: $Enums.Severity | null
+  aiDescription?: string | null
   clearImagePoints: number
   exactLocationPoints: number
   nearbyReportsPoints: number
@@ -820,6 +897,9 @@ export type TicketUncheckedCreateWithoutCitizenInput = {
   latitude: number
   longitude: number
   accuracyMeters?: number | null
+  aiCategory?: $Enums.IssueCategory | null
+  aiSeverity?: $Enums.Severity | null
+  aiDescription?: string | null
   clearImagePoints: number
   exactLocationPoints: number
   nearbyReportsPoints: number
@@ -871,6 +951,9 @@ export type TicketScalarWhereInput = {
   latitude?: Prisma.FloatFilter<"Ticket"> | number
   longitude?: Prisma.FloatFilter<"Ticket"> | number
   accuracyMeters?: Prisma.FloatNullableFilter<"Ticket"> | number | null
+  aiCategory?: Prisma.EnumIssueCategoryNullableFilter<"Ticket"> | $Enums.IssueCategory | null
+  aiSeverity?: Prisma.EnumSeverityNullableFilter<"Ticket"> | $Enums.Severity | null
+  aiDescription?: Prisma.StringNullableFilter<"Ticket"> | string | null
   clearImagePoints?: Prisma.IntFilter<"Ticket"> | number
   exactLocationPoints?: Prisma.IntFilter<"Ticket"> | number
   nearbyReportsPoints?: Prisma.IntFilter<"Ticket"> | number
@@ -892,6 +975,9 @@ export type TicketCreateManyCitizenInput = {
   latitude: number
   longitude: number
   accuracyMeters?: number | null
+  aiCategory?: $Enums.IssueCategory | null
+  aiSeverity?: $Enums.Severity | null
+  aiDescription?: string | null
   clearImagePoints: number
   exactLocationPoints: number
   nearbyReportsPoints: number
@@ -912,6 +998,9 @@ export type TicketUpdateWithoutCitizenInput = {
   latitude?: Prisma.FloatFieldUpdateOperationsInput | number
   longitude?: Prisma.FloatFieldUpdateOperationsInput | number
   accuracyMeters?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  aiCategory?: Prisma.NullableEnumIssueCategoryFieldUpdateOperationsInput | $Enums.IssueCategory | null
+  aiSeverity?: Prisma.NullableEnumSeverityFieldUpdateOperationsInput | $Enums.Severity | null
+  aiDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clearImagePoints?: Prisma.IntFieldUpdateOperationsInput | number
   exactLocationPoints?: Prisma.IntFieldUpdateOperationsInput | number
   nearbyReportsPoints?: Prisma.IntFieldUpdateOperationsInput | number
@@ -933,6 +1022,9 @@ export type TicketUncheckedUpdateWithoutCitizenInput = {
   latitude?: Prisma.FloatFieldUpdateOperationsInput | number
   longitude?: Prisma.FloatFieldUpdateOperationsInput | number
   accuracyMeters?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  aiCategory?: Prisma.NullableEnumIssueCategoryFieldUpdateOperationsInput | $Enums.IssueCategory | null
+  aiSeverity?: Prisma.NullableEnumSeverityFieldUpdateOperationsInput | $Enums.Severity | null
+  aiDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clearImagePoints?: Prisma.IntFieldUpdateOperationsInput | number
   exactLocationPoints?: Prisma.IntFieldUpdateOperationsInput | number
   nearbyReportsPoints?: Prisma.IntFieldUpdateOperationsInput | number
@@ -954,6 +1046,9 @@ export type TicketUncheckedUpdateManyWithoutCitizenInput = {
   latitude?: Prisma.FloatFieldUpdateOperationsInput | number
   longitude?: Prisma.FloatFieldUpdateOperationsInput | number
   accuracyMeters?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  aiCategory?: Prisma.NullableEnumIssueCategoryFieldUpdateOperationsInput | $Enums.IssueCategory | null
+  aiSeverity?: Prisma.NullableEnumSeverityFieldUpdateOperationsInput | $Enums.Severity | null
+  aiDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clearImagePoints?: Prisma.IntFieldUpdateOperationsInput | number
   exactLocationPoints?: Prisma.IntFieldUpdateOperationsInput | number
   nearbyReportsPoints?: Prisma.IntFieldUpdateOperationsInput | number
@@ -978,6 +1073,9 @@ export type TicketSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   latitude?: boolean
   longitude?: boolean
   accuracyMeters?: boolean
+  aiCategory?: boolean
+  aiSeverity?: boolean
+  aiDescription?: boolean
   clearImagePoints?: boolean
   exactLocationPoints?: boolean
   nearbyReportsPoints?: boolean
@@ -1001,6 +1099,9 @@ export type TicketSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   latitude?: boolean
   longitude?: boolean
   accuracyMeters?: boolean
+  aiCategory?: boolean
+  aiSeverity?: boolean
+  aiDescription?: boolean
   clearImagePoints?: boolean
   exactLocationPoints?: boolean
   nearbyReportsPoints?: boolean
@@ -1024,6 +1125,9 @@ export type TicketSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   latitude?: boolean
   longitude?: boolean
   accuracyMeters?: boolean
+  aiCategory?: boolean
+  aiSeverity?: boolean
+  aiDescription?: boolean
   clearImagePoints?: boolean
   exactLocationPoints?: boolean
   nearbyReportsPoints?: boolean
@@ -1047,6 +1151,9 @@ export type TicketSelectScalar = {
   latitude?: boolean
   longitude?: boolean
   accuracyMeters?: boolean
+  aiCategory?: boolean
+  aiSeverity?: boolean
+  aiDescription?: boolean
   clearImagePoints?: boolean
   exactLocationPoints?: boolean
   nearbyReportsPoints?: boolean
@@ -1056,7 +1163,7 @@ export type TicketSelectScalar = {
   updatedAt?: boolean
 }
 
-export type TicketOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "ticketNumber" | "citizenId" | "photoGcsObjectName" | "category" | "severity" | "description" | "urgencyNote" | "department" | "latitude" | "longitude" | "accuracyMeters" | "clearImagePoints" | "exactLocationPoints" | "nearbyReportsPoints" | "recentReportPoints" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["ticket"]>
+export type TicketOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "ticketNumber" | "citizenId" | "photoGcsObjectName" | "category" | "severity" | "description" | "urgencyNote" | "department" | "latitude" | "longitude" | "accuracyMeters" | "aiCategory" | "aiSeverity" | "aiDescription" | "clearImagePoints" | "exactLocationPoints" | "nearbyReportsPoints" | "recentReportPoints" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["ticket"]>
 export type TicketInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   citizen?: boolean | Prisma.Ticket$citizenArgs<ExtArgs>
 }
@@ -1085,6 +1192,9 @@ export type $TicketPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     latitude: number
     longitude: number
     accuracyMeters: number | null
+    aiCategory: $Enums.IssueCategory | null
+    aiSeverity: $Enums.Severity | null
+    aiDescription: string | null
     clearImagePoints: number
     exactLocationPoints: number
     nearbyReportsPoints: number
@@ -1528,6 +1638,9 @@ export interface TicketFieldRefs {
   readonly latitude: Prisma.FieldRef<"Ticket", 'Float'>
   readonly longitude: Prisma.FieldRef<"Ticket", 'Float'>
   readonly accuracyMeters: Prisma.FieldRef<"Ticket", 'Float'>
+  readonly aiCategory: Prisma.FieldRef<"Ticket", 'IssueCategory'>
+  readonly aiSeverity: Prisma.FieldRef<"Ticket", 'Severity'>
+  readonly aiDescription: Prisma.FieldRef<"Ticket", 'String'>
   readonly clearImagePoints: Prisma.FieldRef<"Ticket", 'Int'>
   readonly exactLocationPoints: Prisma.FieldRef<"Ticket", 'Int'>
   readonly nearbyReportsPoints: Prisma.FieldRef<"Ticket", 'Int'>

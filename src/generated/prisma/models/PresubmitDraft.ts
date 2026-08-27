@@ -757,14 +757,6 @@ export type EnumDraftStatusFieldUpdateOperationsInput = {
   set?: $Enums.DraftStatus
 }
 
-export type NullableEnumIssueCategoryFieldUpdateOperationsInput = {
-  set?: $Enums.IssueCategory | null
-}
-
-export type NullableEnumSeverityFieldUpdateOperationsInput = {
-  set?: $Enums.Severity | null
-}
-
 export type NullableIntFieldUpdateOperationsInput = {
   set?: number | null
   increment?: number
