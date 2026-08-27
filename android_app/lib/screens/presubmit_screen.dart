@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../models/report.dart';
 import '../services/service_locator.dart';
 import '../utils/maps.dart';
+import '../widgets/address_text.dart';
 import '../widgets/trust_score_card.dart';
 import 'ticket_detail_screen.dart';
 
@@ -154,10 +155,7 @@ class _PresubmitScreenState extends State<PresubmitScreen> {
           ListTile(
             contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.location_on_outlined),
-            title: Text(
-              '${presubmit.location.latitude.toStringAsFixed(5)}, '
-              '${presubmit.location.longitude.toStringAsFixed(5)}',
-            ),
+            title: AddressText(location: presubmit.location),
             subtitle: Text(
               presubmit.location.accuracyMeters == null
                   ? 'Accuracy unknown'

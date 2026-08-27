@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../models/report.dart';
 import '../utils/maps.dart';
+import '../widgets/address_text.dart';
 import '../widgets/severity_chip.dart';
 import '../widgets/status_timeline.dart';
 import '../widgets/trust_score_card.dart';
@@ -78,10 +79,7 @@ class TicketDetailScreen extends StatelessWidget {
           ListTile(
             contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.location_on_outlined),
-            title: Text(
-              '${ticket.location.latitude.toStringAsFixed(5)}, '
-              '${ticket.location.longitude.toStringAsFixed(5)}',
-            ),
+            title: AddressText(location: ticket.location),
             subtitle: Text(
               ticket.location.accuracyMeters == null
                   ? 'Accuracy unknown'
