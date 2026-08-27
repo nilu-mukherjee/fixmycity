@@ -37,7 +37,7 @@ class AuthService {
     final GoogleSignInAccount account = await GoogleSignIn.instance
         .authenticate();
     final idToken = account.authentication.idToken;
-    if (idToken == null) {
+    if (idToken == null || idToken.isEmpty) {
       throw AuthException('Google did not return an ID token');
     }
 

@@ -43,6 +43,10 @@ model Session {
 
 model Account {
   id                    String    @id
+  // Scopes account identity by OAuth issuer (e.g. "https://accounts.google.com")
+  // — required since Better Auth 1.7, see its "account identity is scoped by
+  // issuer" upgrade guide. Missing this caused sign-in to throw internally.
+  issuer                String
   accountId             String
   providerId            String
   userId                String
@@ -57,6 +61,7 @@ model Account {
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
+  @@unique([issuer, accountId])
   @@index([userId])
   @@map("account")
 }
