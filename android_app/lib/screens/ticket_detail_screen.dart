@@ -46,56 +46,56 @@ class TicketDetailScreen extends StatelessWidget {
             margin: EdgeInsets.zero,
             child: Padding(
               padding: const EdgeInsets.all(16),
-              child: Row(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Full-width line for the title — sharing a Row
-                        // with the chip left too little room once this
-                        // column also had to share space with the vertical
-                        // status tracker, causing "Footpath" to break
-                        // mid-word ("Footpat"/"h").
-                        Text(
-                          ticket.category.label,
-                          style: Theme.of(context).textTheme.titleLarge,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 4),
-                        SeverityChip(severity: ticket.severity),
-                        const SizedBox(height: 6),
-                        _MetaLine(
-                          icon: Icons.apartment_rounded,
-                          iconColor: Colors.deepPurple,
-                          text: 'Routed to ${ticket.department}',
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          ticket.description,
-                          style: Theme.of(
-                            context,
-                          ).textTheme.bodyMedium?.copyWith(fontSize: 13),
-                        ),
-                        const SizedBox(height: 8),
-                        _MetaLine(
-                          icon: Icons.event_rounded,
-                          iconColor: Colors.blue,
-                          text:
-                              'Reported ${DateFormat.yMMMd().add_jm().format(ticket.createdAt)}',
-                        ),
-                        const SizedBox(height: 10),
-                        LocationInfo(
-                          location: ticket.location,
-                          onTap: () => openInMaps(ticket.location),
-                        ),
-                      ],
-                    ),
+                  Text(
+                    ticket.category.label,
+                    style: Theme.of(context).textTheme.titleLarge,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(width: 16),
-                  StatusTimeline(status: ticket.status, direction: Axis.vertical),
+                  const SizedBox(height: 12),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _MetaLine(
+                              icon: Icons.event_rounded,
+                              iconColor: Colors.blue,
+                              text:
+                                  'Reported ${DateFormat.yMMMd().add_jm().format(ticket.createdAt)}',
+                            ),
+                            const SizedBox(height: 8),
+                            _MetaLine(
+                              icon: Icons.apartment_rounded,
+                              iconColor: Colors.deepPurple,
+                              text: 'Routed to ${ticket.department}',
+                            ),
+                            const SizedBox(height: 8),
+                            SeverityChip(severity: ticket.severity),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      StatusTimeline(status: ticket.status, direction: Axis.vertical),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    ticket.description,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(fontSize: 13),
+                  ),
+                  const SizedBox(height: 10),
+                  LocationInfo(
+                    location: ticket.location,
+                    onTap: () => openInMaps(ticket.location),
+                  ),
                 ],
               ),
             ),
