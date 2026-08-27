@@ -39,6 +39,8 @@ dependencies:
   geolocator: ^14.0.3
   intl: ^0.20.3
   url_launcher: ^6.3.1
+  google_sign_in: ^7.2.0
+  shared_preferences: ^2.5.3
 
 dev_dependencies:
   flutter_test:
@@ -64,8 +66,7 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/images/logo.png
-    - assets/images/icon.png
+    - assets/images/fixmycity-logo.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -95,5 +96,5 @@ flutter:
 
 flutter_launcher_icons:
   android: true
-  image_path: "assets/images/icon.png"
+  image_path: "assets/images/fixmycity-logo.png"
   min_sdk_android: 21

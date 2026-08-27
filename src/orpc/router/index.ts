@@ -5,6 +5,7 @@ import {
   getTicket,
   listTickets,
 } from './reports'
+import { listAllTickets, updateTicketStatus } from './admin'
 
 export default {
   createDraft,
@@ -12,4 +13,6 @@ export default {
   createTicket,
   listTickets,
   getTicket,
+  listAllTickets,
+  updateTicketStatus,
 }

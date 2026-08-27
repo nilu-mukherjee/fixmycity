@@ -6,8 +6,7 @@ const BUCKET_NAME = 'fixmycity-506122-photos'
 
 export { getPublicUrl }
 
-// A fresh client per call, consistent with this repo's pattern for other
-// stateful clients (ConvexHttpClient) — cheap to construct, avoids sharing
+// A fresh Storage client per call — cheap to construct, avoids sharing
 // mutable state across concurrent requests.
 function bucket() {
   return new Storage().bucket(BUCKET_NAME)

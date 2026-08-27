@@ -103,7 +103,7 @@ Target: **Google Cloud Run**, running the backend as a container. The AI classif
 
 ## Client Architecture
 
-Citizen-facing interface: a **Flutter app** (a separate codebase/repo from this one, not the web frontend, not a wrapper around it) — citizens open the app, submit a report, and see the issue move through the pipeline. It talks to the Cloud Run/Genkit/Convex backend over HTTP. The admin dashboard stays on the web (TanStack Start, this repo).
+Citizen-facing interface: a **Flutter app** (a separate codebase/repo from this one, not the web frontend, not a wrapper around it) — citizens open the app, submit a report, and see the issue move through the pipeline. It talks to the Cloud Run/Genkit/Postgres backend over HTTP. The admin dashboard stays on the web (TanStack Start, this repo).
 
 Citizen app flow:
 1. User opens the app, starts a new complaint.
@@ -116,11 +116,11 @@ Pipeline, driven by a Genkit flow on the backend:
 
 Citizen report (Flutter app, photo captured) → Genkit flow → Gemini Vision (image understanding) → issue classification → severity score → duplicate check tool → department routing → presubmit ticket summary (user reviews/edits) → user approves → ticket created
 
-The Flutter app calls the Cloud Run backend (which hosts the Genkit flow and Convex data) to submit reports and poll/receive ticket status.
+The Flutter app calls the Cloud Run backend (which hosts the Genkit flow and Postgres data) to submit reports and poll/receive ticket status.
 
 ## Data Store
 
-**Convex** is the store for reports/tickets (not Prisma/Postgres, which stays unused scaffold unless a later need is relational/SQL-specific). Reasons: Convex has built-in file storage, so citizen photo uploads need no separate GCS/S3 setup; its queries are reactive by default, so the citizen tracking status and admin dashboard get live updates for free instead of hand-rolled polling/websockets; it's already the more deeply wired provider in this repo (`ConvexProvider` wraps the whole root route); and its TypeScript functions iterate fast, which matters for a 24-48h build. Duplicate-by-location checks can be done with a simple haversine-distance function in a Convex query — no PostGIS/geospatial index needed at this scale.
+**Prisma/Postgres** (Cloud SQL) is the store for reports/tickets, alongside Better Auth's user/session tables — one GCP-native database, no third-party hosted service. (This repo initially used Convex for reports/tickets; it was later removed so the whole stack runs on Google Cloud with nothing external.) Citizen photo uploads go straight to **GCS**, not through the database. Duplicate-by-location checks are a simple haversine-distance filter over tickets fetched via Prisma — no PostGIS/geospatial index needed at this scale. The accepted tradeoff versus Convex: the admin dashboard's ticket list polls (a few seconds) instead of getting Convex's free live/reactive updates.
 
 ## Auth
 

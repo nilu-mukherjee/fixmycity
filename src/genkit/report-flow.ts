@@ -1,10 +1,7 @@
 import { genkit, z } from 'genkit'
 import { googleAI } from '@genkit-ai/google-genai'
-import { ConvexHttpClient } from 'convex/browser'
 
-import { api } from '../../convex/_generated/api'
-
-import type { Doc } from '../../convex/_generated/dataModel'
+import { findNearbyTickets } from '#/lib/tickets'
 
 const ai = genkit({ plugins: [googleAI()] })
 
@@ -81,19 +78,14 @@ const findNearbyReportsTool = ai.defineTool(
     }),
   },
   async (input) => {
-    const convexUrl = process.env.VITE_CONVEX_URL
-    if (!convexUrl) {
-      throw new Error('VITE_CONVEX_URL is not set')
-    }
-    const convex = new ConvexHttpClient(convexUrl)
-    const matches = await convex.query(api.tickets.findNearby, input)
+    const matches = await findNearbyTickets(input)
     console.log(
       `[agent] findNearbyReports(${input.category} @ ${input.latitude},${input.longitude}) -> ${matches.length} match(es)`,
     )
     return {
       count: matches.length,
       mostRecentHoursAgo: matches.length
-        ? Math.min(...matches.map((m) => (Date.now() - m._creationTime) / 3_600_000))
+        ? Math.min(...matches.map((m) => (Date.now() - m.createdAt.getTime()) / 3_600_000))
         : null,
     }
   },
@@ -168,7 +160,7 @@ const RECENT_WINDOW_MS = 48 * 60 * 60 * 1000
 function computeTrustScore(params: {
   imageIsClear: boolean
   accuracyMeters: number | undefined
-  nearbyMatches: Array<Doc<'tickets'>>
+  nearbyMatches: Awaited<ReturnType<typeof findNearbyTickets>>
 }): TrustScoreBreakdown {
   const clearImagePoints = params.imageIsClear ? 30 : 0
 
@@ -192,7 +184,7 @@ function computeTrustScore(params: {
 
   const now = Date.now()
   const hasRecentMatch = params.nearbyMatches.some(
-    (t) => now - t._creationTime <= RECENT_WINDOW_MS,
+    (t) => now - t.createdAt.getTime() <= RECENT_WINDOW_MS,
   )
   const recentReportPoints = hasRecentMatch ? 15 : 0
 
@@ -221,8 +213,8 @@ export type PresubmitResult =
 
 /**
  * Orchestrates the full "presubmit" pipeline: Gemini Vision classification,
- * duplicate check against Convex, trust score, department routing. Does not
- * persist anything — that happens once the citizen approves (see
+ * duplicate check against Postgres, trust score, department routing. Does
+ * not persist anything — that happens once the citizen approves (see
  * `src/orpc/router/reports.ts`'s `createTicket`).
  */
 export async function runReportPipeline(params: {
@@ -232,14 +224,6 @@ export async function runReportPipeline(params: {
   accuracyMeters: number | undefined
   urgencyNote: string
 }): Promise<PresubmitResult> {
-  const convexUrl = process.env.VITE_CONVEX_URL
-  if (!convexUrl) {
-    throw new Error('VITE_CONVEX_URL is not set')
-  }
-  // A fresh client per call — ConvexHttpClient is stateful and not safe to
-  // share across concurrent server requests.
-  const convex = new ConvexHttpClient(convexUrl)
-
   const photoResponse = await fetch(params.photoUrl)
   if (!photoResponse.ok) {
     throw new Error(`Could not fetch photo from GCS: ${photoResponse.status}`)
@@ -261,7 +245,7 @@ export async function runReportPipeline(params: {
     return { isCivicIssue: false, description: analysis.description }
   }
 
-  const nearbyMatches = await convex.query(api.tickets.findNearby, {
+  const nearbyMatches = await findNearbyTickets({
     latitude: params.latitude,
     longitude: params.longitude,
     category: analysis.category,

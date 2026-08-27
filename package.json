@@ -18,13 +18,11 @@
     "db:generate": "dotenv -e .env.local -- prisma generate",
     "db:push": "dotenv -e .env.local -- prisma db push",
     "db:migrate": "dotenv -e .env.local -- prisma migrate dev",
-    "db:studio": "dotenv -e .env.local -- prisma studio",
-    "db:seed": "dotenv -e .env.local -- prisma db seed"
+    "db:studio": "dotenv -e .env.local -- prisma studio"
   },
   "dependencies": {
     "@apollo/client": "^4.1.6",
     "@apollo/client-integration-tanstack-start": "^0.14.4-rc.0",
-    "@convex-dev/react-query": "0.1.0",
     "@faker-js/faker": "^10.3.0",
     "@genkit-ai/google-genai": "^1.41.0",
     "@google-cloud/storage": "^8.0.1",
@@ -60,7 +58,6 @@
     "better-auth": "^1.5.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "convex": "^1.32.0",
     "dotenv-cli": "^11.0.0",
     "genkit": "^1.41.0",
     "graphql": "^16.10.0",

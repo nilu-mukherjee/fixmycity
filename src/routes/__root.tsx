@@ -6,8 +6,6 @@ import {
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 
-import ConvexProvider from '../integrations/convex/provider'
-
 import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
 
 import { getLocale } from '#/paraglide/runtime'
@@ -17,11 +15,9 @@ import appCss from '../styles.css?url'
 import type { ApolloClientIntegration } from '@apollo/client-integration-tanstack-start'
 
 import type { QueryClient } from '@tanstack/react-query'
-import type { ConvexQueryClient } from '@convex-dev/react-query'
 
 interface MyRouterContext extends ApolloClientIntegration.RouterContext {
   queryClient: QueryClient
-  convexQueryClient: ConvexQueryClient
 }
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
@@ -62,29 +58,25 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 })
 
 function RootDocument({ children }: { children: React.ReactNode }) {
-  const { convexQueryClient } = Route.useRouteContext()
-
   return (
     <html lang={getLocale()}>
       <head>
         <HeadContent />
       </head>
       <body>
-        <ConvexProvider convexQueryClient={convexQueryClient}>
-          {children}
-          <TanStackDevtools
-            config={{
-              position: 'bottom-right',
-            }}
-            plugins={[
-              {
-                name: 'Tanstack Router',
-                render: <TanStackRouterDevtoolsPanel />,
-              },
-              TanStackQueryDevtools,
-            ]}
-          />
-        </ConvexProvider>
+        {children}
+        <TanStackDevtools
+          config={{
+            position: 'bottom-right',
+          }}
+          plugins={[
+            {
+              name: 'Tanstack Router',
+              render: <TanStackRouterDevtoolsPanel />,
+            },
+            TanStackQueryDevtools,
+          ]}
+        />
         <Scripts />
       </body>
     </html>

@@ -1,19 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
-import { convexQuery, useConvexMutation } from '@convex-dev/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { Button } from '#/components/ui/button'
 import { getPublicUrl } from '#/gcs/url'
-import { api } from '../../convex/_generated/api'
+import { orpc } from '#/orpc/client'
 
-import type { Doc, Id } from '../../convex/_generated/dataModel'
+import type { AdminTicket } from '#/orpc/router/admin'
 
 export const Route = createFileRoute('/admin')({ component: AdminConsole })
 
-type Category = Doc<'tickets'>['category']
-type Severity = Doc<'tickets'>['severity']
-type Status = Doc<'tickets'>['status']
+type Category = AdminTicket['category']
+type Severity = AdminTicket['severity']
+type Status = AdminTicket['status']
 
 const CATEGORY_LABEL: Record<Category, string> = {
   pothole: 'Pothole',
@@ -104,7 +103,7 @@ interface MonthOverMonth {
  * caller should render a negative pct as "good" (green), not the usual
  * business-KPI convention of "up = good".
  */
-function monthOverMonth(tickets: Array<Doc<'tickets'>>, severity: Severity): MonthOverMonth {
+function monthOverMonth(tickets: Array<AdminTicket>, severity: Severity): MonthOverMonth {
   const now = new Date()
   const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime()
   const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).getTime()
@@ -113,8 +112,9 @@ function monthOverMonth(tickets: Array<Doc<'tickets'>>, severity: Severity): Mon
   let lastMonth = 0
   for (const t of tickets) {
     if (t.severity !== severity) continue
-    if (t._creationTime >= thisMonthStart) thisMonth++
-    else if (t._creationTime >= lastMonthStart) lastMonth++
+    const creationTime = t.createdAt.getTime()
+    if (creationTime >= thisMonthStart) thisMonth++
+    else if (creationTime >= lastMonthStart) lastMonth++
   }
 
   if (lastMonth === 0) {
@@ -123,7 +123,7 @@ function monthOverMonth(tickets: Array<Doc<'tickets'>>, severity: Severity): Mon
   return { pct: Math.round(((thisMonth - lastMonth) / lastMonth) * 100), isNew: false }
 }
 
-function trustTotal(score: Doc<'tickets'>['trustScore']): number {
+function trustTotal(score: AdminTicket['trustScore']): number {
   return (
     score.clearImagePoints +
     score.exactLocationPoints +
@@ -134,7 +134,7 @@ function trustTotal(score: Doc<'tickets'>['trustScore']): number {
 
 type SortKey = 'category' | 'severity' | 'status' | 'department' | 'trust' | 'reported'
 
-function compareBySortKey(key: SortKey, a: Doc<'tickets'>, b: Doc<'tickets'>): number {
+function compareBySortKey(key: SortKey, a: AdminTicket, b: AdminTicket): number {
   switch (key) {
     case 'category':
       return CATEGORY_LABEL[a.category].localeCompare(CATEGORY_LABEL[b.category])
@@ -147,7 +147,7 @@ function compareBySortKey(key: SortKey, a: Doc<'tickets'>, b: Doc<'tickets'>): n
     case 'trust':
       return trustTotal(a.trustScore) - trustTotal(b.trustScore)
     case 'reported':
-      return a._creationTime - b._creationTime
+      return a.createdAt.getTime() - b.createdAt.getTime()
   }
 }
 
@@ -173,7 +173,9 @@ function useDarkMode() {
 }
 
 function AdminConsole() {
-  const ticketsQuery = useQuery(convexQuery(api.tickets.list, {}))
+  const ticketsQuery = useQuery(
+    orpc.listAllTickets.queryOptions({ input: {}, refetchInterval: 5000 }),
+  )
   const tickets = ticketsQuery.data ?? []
   const { isDark, toggle: toggleDark } = useDarkMode()
 
@@ -181,7 +183,7 @@ function AdminConsole() {
     () => new Set(['received', 'verified', 'assigned', 'in_progress']),
   )
   const [severityFilter, setSeverityFilter] = useState<Set<Severity>>(new Set())
-  const [selectedId, setSelectedId] = useState<Id<'tickets'> | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
   const [sortColumn, setSortColumn] = useState<SortKey | null>(null)
   const [sortAsc, setSortAsc] = useState(true)
   const [page, setPage] = useState(1)
@@ -197,7 +199,7 @@ function AdminConsole() {
         return sortAsc ? cmp : -cmp
       }
       const sevDiff = SEVERITY_ORDER.indexOf(b.severity) - SEVERITY_ORDER.indexOf(a.severity)
-      return sevDiff !== 0 ? sevDiff : b._creationTime - a._creationTime
+      return sevDiff !== 0 ? sevDiff : b.createdAt.getTime() - a.createdAt.getTime()
     })
   }, [tickets, statusFilter, severityFilter, sortColumn, sortAsc])
 
@@ -220,7 +222,7 @@ function AdminConsole() {
     }
   }
 
-  const selected = tickets.find((t) => t._id === selectedId) ?? null
+  const selected = tickets.find((t) => t.id === selectedId) ?? null
   const openCount = tickets.filter((t) => t.status !== 'resolved').length
 
   function toggle<T>(set: Set<T>, value: T, setter: (s: Set<T>) => void) {
@@ -300,7 +302,7 @@ function AdminConsole() {
                     </thead>
                     <tbody>
                       {pageRows.map((t) => (
-                        <TicketRow key={t._id} ticket={t} onClick={() => setSelectedId(t._id)} />
+                        <TicketRow key={t.id} ticket={t} onClick={() => setSelectedId(t.id)} />
                       ))}
                     </tbody>
                   </table>
@@ -358,7 +360,7 @@ function Header({
     <header className="sticky top-0 z-30 border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
       <div className="mx-auto flex max-w-(--breakpoint-2xl) flex-wrap items-center justify-between gap-3 px-4 py-4 md:px-6">
         <div className="flex items-center gap-3">
-          <img src="/favicon.png" alt="" className="size-9 shrink-0 rounded-lg" />
+          <img src="/favicon.png" alt="" className="size-11 shrink-0 object-contain" />
           <div>
             <p className="text-theme-xs font-medium tracking-wide text-gray-400 uppercase dark:text-gray-500">
               FixMyCity
@@ -395,7 +397,7 @@ function Header({
 function SidebarRail() {
   return (
     <aside className="hidden w-[90px] shrink-0 flex-col items-center border-r border-gray-200 bg-white py-8 dark:border-gray-800 dark:bg-black sm:flex">
-      <img src="/favicon.png" alt="FixMyCity" className="mb-8 size-9 rounded-lg" />
+      <img src="/favicon.png" alt="FixMyCity" className="mb-8 size-11 object-contain" />
       <nav className="flex flex-col items-center gap-2">
         <RailIcon label="Issue Queue" active>
           <path
@@ -536,7 +538,7 @@ function PriorityBadge({
   tickets,
 }: {
   s: Severity
-  tickets: Array<Doc<'tickets'>>
+  tickets: Array<AdminTicket>
 }) {
   const momChange = monthOverMonth(tickets, s)
 
@@ -676,7 +678,7 @@ function AlertIcon() {
   )
 }
 
-function TicketRow({ ticket, onClick }: { ticket: Doc<'tickets'>; onClick: () => void }) {
+function TicketRow({ ticket, onClick }: { ticket: AdminTicket; onClick: () => void }) {
   return (
     <tr
       onClick={onClick}
@@ -719,7 +721,7 @@ function TicketRow({ ticket, onClick }: { ticket: Doc<'tickets'>; onClick: () =>
         {trustTotal(ticket.trustScore)}/100
       </td>
       <td className="text-theme-xs px-5 py-4 pr-6 whitespace-nowrap text-gray-400 dark:text-gray-500">
-        {relativeTime(ticket._creationTime)}
+        {relativeTime(ticket.createdAt.getTime())}
       </td>
       <td className="px-5 py-4">
         <Badge tone={STATUS_BADGE[ticket.status]}>{STATUS_LABEL[ticket.status]}</Badge>
@@ -749,8 +751,9 @@ function TrustRow({ label, points, max }: { label: string; points: number; max: 
   )
 }
 
-function DetailPanel({ ticket, onClose }: { ticket: Doc<'tickets'>; onClose: () => void }) {
-  const updateStatus = useConvexMutation(api.tickets.updateStatus)
+function DetailPanel({ ticket, onClose }: { ticket: AdminTicket; onClose: () => void }) {
+  const queryClient = useQueryClient()
+  const updateStatus = useMutation(orpc.updateTicketStatus.mutationOptions())
   const [pending, setPending] = useState(false)
   const next = nextStatus(ticket.status)
   const total = trustTotal(ticket.trustScore)
@@ -759,7 +762,10 @@ function DetailPanel({ ticket, onClose }: { ticket: Doc<'tickets'>; onClose: () 
     if (!next) return
     setPending(true)
     try {
-      await updateStatus({ id: ticket._id, status: next })
+      await updateStatus.mutateAsync({ id: ticket.id, status: next })
+      await queryClient.invalidateQueries({
+        queryKey: orpc.listAllTickets.queryKey({ input: {} }),
+      })
     } finally {
       setPending(false)
     }
@@ -803,7 +809,7 @@ function DetailPanel({ ticket, onClose }: { ticket: Doc<'tickets'>; onClose: () 
           </div>
 
           <p className="text-theme-xs text-gray-400 dark:text-gray-500">
-            Reported {formatDate(ticket._creationTime)}
+            Reported {formatDate(ticket.createdAt.getTime())}
           </p>
 
           <img
@@ -845,7 +851,7 @@ function DetailPanel({ ticket, onClose }: { ticket: Doc<'tickets'>; onClose: () 
                 >
                   {ticket.latitude.toFixed(5)}, {ticket.longitude.toFixed(5)}
                 </a>
-                {ticket.accuracyMeters !== undefined && (
+                {ticket.accuracyMeters != null && (
                   <span className="text-gray-400 dark:text-gray-500"> ±{Math.round(ticket.accuracyMeters)}m</span>
                 )}
               </p>

@@ -5,6 +5,7 @@ import '../models/report.dart';
 import '../services/service_locator.dart';
 import '../widgets/severity_chip.dart';
 import 'capture_screen.dart';
+import 'sign_in_screen.dart';
 import 'ticket_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -36,6 +37,14 @@ class _HomeScreenState extends State<HomeScreen> {
     _refresh();
   }
 
+  Future<void> _signOut() async {
+    await authService.signOut();
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => const SignInScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -43,11 +52,25 @@ class _HomeScreenState extends State<HomeScreen> {
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Image.asset('assets/images/icon.png', width: 28, height: 28),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(7),
+              child: Image.asset(
+                'assets/images/fixmycity-logo.png',
+                width: 32,
+                height: 32,
+              ),
+            ),
             const SizedBox(width: 10),
             const Text('FixMyCity'),
           ],
         ),
+        actions: [
+          IconButton(
+            onPressed: _signOut,
+            icon: const Icon(Icons.logout),
+            tooltip: 'Sign out',
+          ),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: () async => _refresh(),

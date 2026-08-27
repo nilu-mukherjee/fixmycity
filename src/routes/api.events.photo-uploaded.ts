@@ -1,13 +1,15 @@
 import '#/polyfill'
 
 import { createFileRoute } from '@tanstack/react-router'
-import { ConvexHttpClient } from 'convex/browser'
 
-import { api } from '../../convex/_generated/api'
 import { getPublicUrl } from '#/gcs/url'
 import { runReportPipeline } from '#/genkit/report-flow'
-
-import type { Id } from '../../convex/_generated/dataModel'
+import {
+  getDraft,
+  markDraftError,
+  markDraftNotCivicIssue,
+  markDraftReady,
+} from '#/lib/drafts'
 
 /**
  * Eventarc's destination for `google.cloud.storage.object.v1.finalized`.
@@ -36,15 +38,9 @@ async function handle({ request }: { request: Request }) {
     console.error(`[events] photo-uploaded: unrecognized object name ${objectName}`)
     return new Response('unrecognized object name', { status: 200 })
   }
-  const draftId = match[1] as Id<'presubmitDrafts'>
+  const draftId = match[1]
 
-  const convexUrl = process.env.VITE_CONVEX_URL
-  if (!convexUrl) {
-    throw new Error('VITE_CONVEX_URL is not set')
-  }
-  const convex = new ConvexHttpClient(convexUrl)
-
-  const draft = await convex.query(api.drafts.get, { id: draftId })
+  const draft = await getDraft(draftId)
   if (!draft) {
     console.error(`[events] photo-uploaded: no draft found for id ${draftId}`)
     return new Response('no such draft', { status: 200 })
@@ -55,18 +51,14 @@ async function handle({ request }: { request: Request }) {
       photoUrl: getPublicUrl(objectName),
       latitude: draft.latitude,
       longitude: draft.longitude,
-      accuracyMeters: draft.accuracyMeters,
+      accuracyMeters: draft.accuracyMeters ?? undefined,
       urgencyNote: draft.urgencyNote,
     })
 
     if (!result.isCivicIssue) {
-      await convex.mutation(api.drafts.markNotCivicIssue, {
-        id: draftId,
-        description: result.description,
-      })
+      await markDraftNotCivicIssue(draftId, result.description)
     } else {
-      await convex.mutation(api.drafts.markReady, {
-        id: draftId,
+      await markDraftReady(draftId, {
         category: result.category,
         severity: result.severity,
         description: result.description,
@@ -77,10 +69,10 @@ async function handle({ request }: { request: Request }) {
     }
   } catch (error) {
     console.error(`[events] photo-uploaded: pipeline failed for draft ${draftId}`, error)
-    await convex.mutation(api.drafts.markError, {
-      id: draftId,
-      errorMessage: error instanceof Error ? error.message : String(error),
-    })
+    await markDraftError(
+      draftId,
+      error instanceof Error ? error.message : String(error),
+    )
   }
 
   return new Response('ok', { status: 200 })

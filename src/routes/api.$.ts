@@ -8,6 +8,7 @@ import { onError } from '@orpc/server'
 import { OpenAPIReferencePlugin } from '@orpc/openapi/plugins'
 
 import router from '#/orpc/router'
+import { auth } from '#/lib/auth'
 
 const handler = new OpenAPIHandler(router, {
   interceptors: [
@@ -53,9 +54,11 @@ const handler = new OpenAPIHandler(router, {
 })
 
 async function handle({ request }: { request: Request }) {
+  const session = await auth.api.getSession({ headers: request.headers })
+
   const { response } = await handler.handle(request, {
     prefix: '/api',
-    context: {},
+    context: { userId: session?.user.id ?? null },
   })
 
   return response ?? new Response('Not Found', { status: 404 })

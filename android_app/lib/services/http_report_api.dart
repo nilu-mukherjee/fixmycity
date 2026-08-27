@@ -5,15 +5,19 @@ import 'package:http/http.dart' as http;
 
 import '../config.dart';
 import '../models/report.dart';
+import 'auth_service.dart';
 import 'report_api.dart';
 
 /// Talks to this repo's oRPC backend (src/orpc/router/reports.ts) — the
 /// real Genkit/Gemini Vision pipeline instead of [MockReportApi]'s
 /// keyword-matching stand-in.
 class HttpReportApi implements ReportApi {
-  HttpReportApi({http.Client? client}) : _client = client ?? http.Client();
+  HttpReportApi({http.Client? client, required AuthService authService})
+    : _client = client ?? http.Client(),
+      _authService = authService;
 
   final http.Client _client;
+  final AuthService _authService;
 
   /// How long to keep polling `getDraft` before giving up — the Genkit
   /// pipeline (Gemini call + duplicate check) normally finishes in a few
@@ -139,15 +143,24 @@ class HttpReportApi implements ReportApi {
   /// `{"json": ...}` request/response envelope (verified against the
   /// running dev server).
   Future<dynamic> _call(String procedure, Map<String, dynamic> input) async {
+    final token = await _authService.currentToken();
     final response = await _client.post(
       Uri.parse('$apiBaseUrl/api/rpc/$procedure'),
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
       body: jsonEncode({'json': input}),
     );
 
     final decoded = jsonDecode(response.body);
     final payload = decoded is Map<String, dynamic> ? decoded['json'] : null;
 
+    if (response.statusCode == 401) {
+      // Stale/expired session — clear it so the next launch falls back to
+      // the sign-in screen instead of looping on the same failing token.
+      await _authService.clearStoredToken();
+    }
     if (response.statusCode >= 400) {
       final message = payload is Map<String, dynamic>
           ? payload['message']

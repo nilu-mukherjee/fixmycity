@@ -1,11 +1,28 @@
-import { os } from '@orpc/server'
-import { ConvexHttpClient } from 'convex/browser'
+import { os as baseOs, ORPCError } from '@orpc/server'
 import * as z from 'zod'
 
-import { api } from '../../../convex/_generated/api'
 import { createUploadUrl } from '../../gcs/storage'
+import {
+  createDraft as createDraftRecord,
+  getDraft as getDraftRecord,
+} from '#/lib/drafts'
+import {
+  createTicket as createTicketRecord,
+  getTicket as getTicketRecord,
+  listTicketsForCitizen,
+} from '#/lib/tickets'
 
-import type { Id } from '../../../convex/_generated/dataModel'
+import type { PresubmitDraft, Ticket } from '#/generated/prisma/client.js'
+
+const os = baseOs.$context<{ userId: string | null }>()
+
+/** Rejects unauthenticated requests to citizen-authored/citizen-scoped procedures. */
+const requireCitizen = os.middleware(async ({ context, next }) => {
+  if (!context.userId) {
+    throw new ORPCError('UNAUTHORIZED')
+  }
+  return next({ context: { userId: context.userId } })
+})
 
 const CATEGORIES = [
   'pothole',
@@ -26,14 +43,61 @@ const TrustScoreSchema = z.object({
   recentReportPoints: z.number(),
 })
 
-function convexClient() {
-  const url = process.env.VITE_CONVEX_URL
-  if (!url) {
-    throw new Error('VITE_CONVEX_URL is not set')
+/**
+ * Reshapes a flat-columns Ticket row into the wire shape the Flutter app's
+ * `Ticket.fromJson` expects (`_id`, `_creationTime` as epoch-ms, nested
+ * `trustScore`) — a compatibility shim, not the DB's own storage layout.
+ */
+function toWireTicket(ticket: Ticket) {
+  return {
+    _id: ticket.id,
+    ticketNumber: ticket.ticketNumber,
+    citizenId: ticket.citizenId,
+    photoGcsObjectName: ticket.photoGcsObjectName,
+    category: ticket.category,
+    severity: ticket.severity,
+    description: ticket.description,
+    urgencyNote: ticket.urgencyNote,
+    department: ticket.department,
+    latitude: ticket.latitude,
+    longitude: ticket.longitude,
+    accuracyMeters: ticket.accuracyMeters ?? undefined,
+    trustScore: {
+      clearImagePoints: ticket.clearImagePoints,
+      exactLocationPoints: ticket.exactLocationPoints,
+      nearbyReportsPoints: ticket.nearbyReportsPoints,
+      recentReportPoints: ticket.recentReportPoints,
+    },
+    status: ticket.status,
+    _creationTime: ticket.createdAt.getTime(),
   }
-  // A fresh client per request — ConvexHttpClient is stateful and not safe
-  // to share across concurrent server requests.
-  return new ConvexHttpClient(url)
+}
+
+/** Same shim, for a draft's optional post-analysis fields. */
+function toWireDraft(draft: PresubmitDraft) {
+  const hasTrustScore = draft.clearImagePoints !== null
+  return {
+    _id: draft.id,
+    latitude: draft.latitude,
+    longitude: draft.longitude,
+    accuracyMeters: draft.accuracyMeters ?? undefined,
+    urgencyNote: draft.urgencyNote,
+    status: draft.status,
+    category: draft.category ?? undefined,
+    severity: draft.severity ?? undefined,
+    description: draft.description ?? undefined,
+    department: draft.department ?? undefined,
+    trustScore: hasTrustScore
+      ? {
+          clearImagePoints: draft.clearImagePoints!,
+          exactLocationPoints: draft.exactLocationPoints!,
+          nearbyReportsPoints: draft.nearbyReportsPoints!,
+          recentReportPoints: draft.recentReportPoints!,
+        }
+      : undefined,
+    nearbyDuplicateCount: draft.nearbyDuplicateCount ?? undefined,
+    errorMessage: draft.errorMessage ?? undefined,
+  }
 }
 
 /**
@@ -42,6 +106,7 @@ function convexClient() {
  * asynchronously once Eventarc observes the upload land in GCS.
  */
 export const createDraft = os
+  .use(requireCitizen)
   .input(
     z.object({
       latitude: z.number(),
@@ -50,17 +115,16 @@ export const createDraft = os
       urgencyNote: z.string(),
     }),
   )
-  .handler(async ({ input }) => {
-    const convex = convexClient()
-    const draft = await convex.mutation(api.drafts.create, input)
-    if (!draft) {
-      throw new Error('Failed to create draft')
-    }
+  .handler(async ({ input, context }) => {
+    const draft = await createDraftRecord({
+      ...input,
+      citizenId: context.userId,
+    })
 
-    const objectName = `reports/${draft._id}.jpg`
+    const objectName = `reports/${draft.id}.jpg`
     const uploadUrl = await createUploadUrl(objectName, 'image/jpeg')
 
-    return { draftId: draft._id, uploadUrl }
+    return { draftId: draft.id, uploadUrl }
   })
 
 /**
@@ -70,13 +134,13 @@ export const createDraft = os
 export const getDraft = os
   .input(z.object({ draftId: z.string() }))
   .handler(async ({ input }) => {
-    return await convexClient().query(api.drafts.get, {
-      id: input.draftId as Id<'presubmitDrafts'>,
-    })
+    const draft = await getDraftRecord(input.draftId)
+    return draft ? toWireDraft(draft) : null
   })
 
 /** Step 3: citizen approves the (possibly edited) presubmit result, ticket is created. */
 export const createTicket = os
+  .use(requireCitizen)
   .input(
     z.object({
       photoGcsObjectName: z.string(),
@@ -91,19 +155,24 @@ export const createTicket = os
       trustScore: TrustScoreSchema,
     }),
   )
-  .handler(async ({ input }) => {
-    return await convexClient().mutation(api.tickets.create, input)
+  .handler(async ({ input, context }) => {
+    return toWireTicket(
+      await createTicketRecord({ ...input, citizenId: context.userId }),
+    )
   })
 
-/** All tickets, most recent first. No citizen scoping yet (auth not wired up). */
-export const listTickets = os.input(z.object({})).handler(async () => {
-  return await convexClient().query(api.tickets.list, {})
-})
+/** Tickets submitted by the authenticated citizen, most recent first. */
+export const listTickets = os
+  .use(requireCitizen)
+  .input(z.object({}))
+  .handler(async ({ context }) => {
+    const tickets = await listTicketsForCitizen(context.userId)
+    return tickets.map(toWireTicket)
+  })
 
 export const getTicket = os
   .input(z.object({ id: z.string() }))
   .handler(async ({ input }) => {
-    return await convexClient().query(api.tickets.get, {
-      id: input.id as Id<'tickets'>,
-    })
+    const ticket = await getTicketRecord(input.id)
+    return ticket ? toWireTicket(ticket) : null
   })

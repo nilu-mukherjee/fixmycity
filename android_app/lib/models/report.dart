@@ -1,8 +1,8 @@
 /// Domain models for the FixMyCity citizen report → ticket pipeline.
 ///
-/// These mirror what the backend (Genkit flow + Convex, per project.md) is
-/// expected to return once it exists. [MockReportApi] fills this shape with
-/// simulated data so the app is fully demoable before that backend is built.
+/// These mirror what the backend (Genkit flow + Postgres via Prisma) returns.
+/// [MockReportApi] fills this shape with simulated data so the app is fully
+/// demoable without a live backend.
 library;
 
 enum IssueCategory {
@@ -36,7 +36,7 @@ enum IssueCategory {
     IssueCategory.waterLeakage => 'Water Board',
   };
 
-  /// Wire value used by the backend (snake_case, see convex/schema.ts).
+  /// Wire value used by the backend (snake_case, see prisma/schema.prisma).
   String get apiValue => switch (this) {
     IssueCategory.pothole => 'pothole',
     IssueCategory.garbage => 'garbage',
@@ -104,7 +104,7 @@ enum TicketStatus {
     TicketStatus.resolved => 'Resolved',
   };
 
-  /// Wire value used by the backend (snake_case, see convex/schema.ts).
+  /// Wire value used by the backend (snake_case, see prisma/schema.prisma).
   String get apiValue => switch (this) {
     TicketStatus.received => 'received',
     TicketStatus.verified => 'verified',
@@ -201,10 +201,10 @@ class PresubmitResult {
   final String urgencyNote;
   final TrustScoreBreakdown trustScore;
 
-  /// The backend's Convex `presubmitDrafts` id — set by [HttpReportApi] once
-  /// the photo has been uploaded and analyzed, so `createTicket` can derive
-  /// the GCS object name (`reports/{draftId}.jpg`) without re-uploading.
-  /// Null under [MockReportApi], which never uploads anything.
+  /// The backend's draft id (a `PresubmitDraft` row) — set by [HttpReportApi]
+  /// once the photo has been uploaded and analyzed, so `createTicket` can
+  /// derive the GCS object name (`reports/{draftId}.jpg`) without
+  /// re-uploading. Null under [MockReportApi], which never uploads anything.
   final String? draftId;
 
   /// How many existing tickets this looks like a duplicate of (same
@@ -260,11 +260,13 @@ class Ticket {
       'https://storage.googleapis.com/fixmycity-506122-photos/$photoGcsObjectName';
 
   /// Parses a ticket document as returned by the backend's `createTicket`,
-  /// `listTickets`, or `getTicket` procedures (see convex/tickets.ts).
+  /// `listTickets`, or `getTicket` procedures (see src/lib/tickets.ts and the
+  /// `toWireTicket` shim in src/orpc/router/reports.ts — `_id`/`_creationTime`
+  /// are a preserved wire shape, not literal database fields).
   /// [localPhotoPath] fills in the local file path for a ticket this device
-  /// just created in this session — the backend only knows the Convex
-  /// storage id, not a path on this device. Pass null for tickets loaded
-  /// from the server (e.g. via listMyTickets), which have no local photo.
+  /// just created in this session — the backend only knows the storage id,
+  /// not a path on this device. Pass null for tickets loaded from the server
+  /// (e.g. via listMyTickets), which have no local photo.
   factory Ticket.fromJson(
     Map<String, dynamic> json, {
     String? localPhotoPath,

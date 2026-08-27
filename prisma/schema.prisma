@@ -1,3 +1,4 @@
+
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -7,8 +8,163 @@ datasource db {
   provider = "postgresql"
 }
 
-model Todo {
-  id        Int      @id @default(autoincrement())
-  title     String
+model User {
+  id              String            @id
+  name            String
+  email           String
+  emailVerified   Boolean           @default(false)
+  image           String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  sessions        Session[]
+  accounts        Account[]
+  tickets         Ticket[]
+  presubmitDrafts PresubmitDraft[]
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+enum IssueCategory {
+  pothole
+  garbage
+  streetlight
+  drainage
+  water_leakage
+  road_blockage
+  unsafe_footpath
+}
+
+enum Severity {
+  low
+  medium
+  high
+  emergency
+}
+
+enum TicketStatus {
+  received
+  verified
+  assigned
+  in_progress
+  resolved
+}
+
+enum DraftStatus {
+  processing
+  ready
+  not_a_civic_issue
+  error
+}
+
+model Ticket {
+  id             String        @id @default(cuid())
+  // Human-facing sequential id (displayed as "FMC001", "FMC002", ...) —
+  // separate from `id`, which isn't meant for people to read/type.
+  ticketNumber   Int           @unique @default(autoincrement())
+  citizenId      String?
+  citizen        User?         @relation(fields: [citizenId], references: [id], onDelete: SetNull)
+  photoGcsObjectName String
+  category       IssueCategory
+  severity       Severity
+  description    String
+  urgencyNote    String
+  department     String
+  latitude       Float
+  longitude      Float
+  accuracyMeters Float?
+
+  clearImagePoints    Int
+  exactLocationPoints Int
+  nearbyReportsPoints Int
+  recentReportPoints  Int
+
+  status    TicketStatus @default(received)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@index([category])
+  @@index([citizenId])
+  @@map("ticket")
+}
+
+// A photo has been uploaded to GCS and is awaiting (or has finished) the
+// Genkit analysis triggered by Eventarc — separate from `Ticket` because
+// most of its fields don't exist until analysis completes, whereas every
+// `Ticket` row is always fully formed.
+model PresubmitDraft {
+  id             String      @id @default(cuid())
+  citizenId      String?
+  citizen        User?       @relation(fields: [citizenId], references: [id], onDelete: SetNull)
+  latitude       Float
+  longitude      Float
+  accuracyMeters Float?
+  urgencyNote    String
+  status         DraftStatus @default(processing)
+
+  category    IssueCategory?
+  severity    Severity?
+  description String?
+  department  String?
+
+  clearImagePoints    Int?
+  exactLocationPoints Int?
+  nearbyReportsPoints Int?
+  recentReportPoints  Int?
+
+  nearbyDuplicateCount Int?
+  errorMessage         String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("presubmit_draft")
 }
