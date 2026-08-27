@@ -163,7 +163,12 @@ class _LiveCameraScreenState extends State<LiveCameraScreen> {
                       Expanded(
                         child: ObjectDetectionCameraOverlay(
                           cameraPreview: CameraPreview(controller),
-                          displayAspectRatio: controller.value.aspectRatio,
+                          // Inverted: `controller.value.aspectRatio` is
+                          // reported in the sensor's landscape terms, but the
+                          // UI here is portrait — confirmed empirically (the
+                          // uninverted ratio rendered the preview as a thin
+                          // horizontal strip instead of filling the screen).
+                          displayAspectRatio: 1 / controller.value.aspectRatio,
                           mirrorHorizontally: false,
                           detections: _detections,
                           imageSize: _lastImageSize,
