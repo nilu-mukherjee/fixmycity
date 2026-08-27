@@ -2,7 +2,7 @@
 
 An AI agent that turns citizen complaints — a photo, a location, an urgency note — into verified, prioritized, routed civic repair tickets.
 
-Citizens report a pothole, an overflowing bin, a broken streetlight, or similar from a **Flutter mobile app**. A **Genkit** flow on this repo's backend runs the report through Gemini Vision, decides for itself whether to check for duplicate reports nearby (a real tool call, not a hard-coded step), estimates severity in light of what it finds, and returns an editable "presubmit" ticket for the citizen to approve. Once approved, the ticket lands in **Convex** and is visible on the citizen's status page and (eventually) an admin dashboard.
+Citizens report a pothole, an overflowing bin, a broken streetlight, or similar from a **Flutter mobile app**. A **Genkit** flow on this repo's backend runs the report through Gemini Vision, decides for itself whether to check for duplicate reports nearby (a real tool call, not a hard-coded step), estimates severity in light of what it finds, and returns an editable "presubmit" ticket for the citizen to approve. Once approved, the ticket lands in **Convex** and is visible on the citizen's status page and on this repo's admin dashboard.
 
 Built for the [All Things Agentic Hackathon](https://allthingsagentichackathon.devpost.com/).
 
@@ -13,7 +13,8 @@ android_app/           Flutter citizen app (separate codebase, Dart)
   lib/services/         HttpReportApi — talks to the backend below over HTTP
   lib/screens/           Capture → AI presubmit review → ticket status
 
-src/                   TanStack Start web app: admin backend + API
+src/                   TanStack Start web app: admin dashboard + backend/API
+  routes/admin.tsx       Admin console (issue queue, filters, ticket detail)
   genkit/report-flow.ts  The agent: Gemini Vision + findNearbyReports tool
   orpc/router/reports.ts oRPC procedures exposed at /api/rpc and /api (OpenAPI)
 
@@ -71,6 +72,10 @@ flutter run --dart-define=API_BASE_URL=http://<backend-host>:3000
 ```
 
 `API_BASE_URL` defaults to `http://10.0.2.2:3000` (the Android emulator's alias for the host machine) if omitted — override it for a physical device or a deployed backend.
+
+## Admin dashboard
+
+`npm run dev` and open `http://localhost:3000` — it redirects to `/admin`, the issue queue: filter/sort tickets by status, category, severity, and department; open a ticket for its full detail panel (photo, trust score breakdown, location) and advance its status.
 
 ## Verifying the agent's tool use
 

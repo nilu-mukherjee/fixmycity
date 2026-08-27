@@ -2,15 +2,6 @@ import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
 
 export default defineSchema({
-  products: defineTable({
-    title: v.string(),
-    imageId: v.string(),
-    price: v.number(),
-  }),
-  todos: defineTable({
-    text: v.string(),
-    completed: v.boolean(),
-  }),
   tickets: defineTable({
     // Human-facing sequential id (displayed as "FMC001", "FMC002", ...) —
     // separate from Convex's own opaque `_id`, which isn't meant for people

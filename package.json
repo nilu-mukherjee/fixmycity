@@ -28,7 +28,6 @@
     "@faker-js/faker": "^10.3.0",
     "@genkit-ai/google-genai": "^1.41.0",
     "@google-cloud/storage": "^8.0.1",
-    "@modelcontextprotocol/sdk": "^1.27.1",
     "@orpc/client": "^1.13.6",
     "@orpc/json-schema": "^1.13.6",
     "@orpc/openapi": "^1.13.6",

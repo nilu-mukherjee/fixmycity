@@ -363,7 +363,6 @@ function Header({
             <p className="text-theme-xs font-medium tracking-wide text-gray-400 uppercase dark:text-gray-500">
               FixMyCity
             </p>
-            <h1 className="text-lg font-semibold text-gray-800 dark:text-white/90">Issue Queue</h1>
           </div>
         </div>
         <div className="flex items-center gap-4">
