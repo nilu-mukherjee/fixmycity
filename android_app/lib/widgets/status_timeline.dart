@@ -30,7 +30,7 @@ class StatusTimeline extends StatelessWidget {
           // 320dp minimum row width that didn't fit narrower screens
           // (overflowed past the edge on the A34).
           Expanded(
-            flex: 2,
+            flex: 3,
             child: _StepDot(
               label: steps[i].label,
               isDone: i < currentIndex,
@@ -70,15 +70,25 @@ class _StepDot extends StatelessWidget {
               : null,
         ),
         const SizedBox(height: 4),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
-            color: active ? scheme.onSurface : scheme.onSurfaceVariant,
+        // This stepper is dense/glanceable UI, not reading text — pinned to
+        // its own fixed scale regardless of the system font size so a
+        // single word like "Received" stays on one line instead of
+        // breaking mid-word once the ambient text scale (up to 1.3x
+        // app-wide) left it too wide for its column.
+        MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.noScaling),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+              color: active ? scheme.onSurface : scheme.onSurfaceVariant,
+            ),
           ),
         ),
       ],
