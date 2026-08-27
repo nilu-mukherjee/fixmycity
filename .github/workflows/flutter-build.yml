@@ -29,10 +29,37 @@ jobs:
         with:
           flutter-version: "3.47.1"
           channel: "stable"
+          cache: true
+
+      # NDK download (~1-2GB) is otherwise fetched fresh every run.
+      - name: Cache Android NDK
+        id: cache-ndk
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.ANDROID_HOME }}/ndk/28.2.13676358
+          key: ndk-28.2.13676358
 
       - name: Install Android NDK
+        if: steps.cache-ndk.outputs.cache-hit != 'true'
         run: |
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;28.2.13676358"
+
+      # The big one: object_detection's OpenCV dependency (dartcv4) compiles
+      # native C++ via CMake/NDK on every `flutter build`. Its output lands
+      # in android_app/.dart_tool/hooks_runner/shared/dartcv4/build/ (~12MB,
+      # confirmed by inspecting a local partial build) — reusing it turns a
+      # from-scratch native compile into a no-op on a cache hit.
+      - name: Cache Gradle, pub, and native build outputs
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.pub-cache
+            android_app/.dart_tool/hooks_runner
+          key: flutter-build-${{ hashFiles('android_app/pubspec.lock', 'android_app/android/**/*.gradle*') }}
+          restore-keys: |
+            flutter-build-
 
       - name: flutter pub get
         working-directory: android_app
