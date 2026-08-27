@@ -107,7 +107,7 @@ Citizen-facing interface: a **Flutter app** (a separate codebase/repo from this 
 
 Citizen app flow:
 1. User opens the app, starts a new complaint.
-2. Camera opens; user photographs the issue (pothole, garbage, etc.) like a normal camera — no on-device/live object detection. The captured photo is sent to the backend.
+2. Camera opens; user photographs the issue (pothole, garbage, etc.). A live on-device object-detection overlay (MediaPipe/TFLite, via the `object_detection` Flutter package) runs during framing purely as a "something's in frame" confirmation — it only recognizes generic COCO classes (person, car, ...), not civic-issue categories, so it never claims to identify the actual issue. The captured photo is sent to the backend for real classification.
 3. Backend (Genkit flow + Gemini Vision) detects the issue, classifies category and severity, and returns a **presubmit** structured report.
 4. App shows the presubmit data to the user, editable (category, severity, description, location) before anything is finalized.
 5. User approves → ticket is created.
@@ -124,7 +124,28 @@ The Flutter app calls the Cloud Run backend (which hosts the Genkit flow and Pos
 
 ## Auth
 
-Citizens (and admins) log in via **Google and Microsoft** social sign-in, using **Better Auth**'s `socialProviders` (already scaffolded in `src/lib/auth.ts`, currently email/password only — needs Google/Microsoft provider config added, plus OAuth client credentials as env vars).
+Citizens log in via **Google** social sign-in (Better Auth's `socialProviders.google`, `src/lib/auth.ts`) — live end-to-end: real GCP OAuth client, `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` set on Cloud Run, tickets scoped per signed-in citizen. Microsoft sign-in is not implemented (only Google). The admin dashboard has no login gate (unauthenticated by design, per its oRPC router).
+
+## Implementation Status
+
+What's actually built and deployed, vs. still spec/aspiration above:
+
+**Live and deployed:**
+- Backend + admin dashboard on **Google Cloud Run** (`fixmycity-1003427733440.asia-south1.run.app`), auto-deploying via Cloud Build on every push to `main`.
+- **Postgres on Cloud SQL** is the sole data store (reports/tickets, presubmit drafts, Better Auth users/sessions) — no third-party DB.
+- Full pipeline: photo upload → GCS → Eventarc-triggered Genkit flow → Gemini Vision classification → presubmit draft → citizen review/edit → ticket creation.
+- **Trust score** (clear image / exact location / nearby reports / recency, max 100) computed and shown to citizens.
+- **Duplicate detection** via haversine distance over same-category tickets (no PostGIS).
+- **Department routing** — mocked mapping, no real municipal integration (per spec).
+- **Admin dashboard** — TailAdmin-style UI, human-readable sequential ticket ids (FMC001, FMC002, ...), Google Maps link per ticket, real dates + month-over-month stats.
+- **Citizen Flutter app**: Google Sign-In (tickets scoped per citizen), camera-only capture (no gallery picker) with immediate auto-analyze on capture, a live on-device object-detection overlay (MediaPipe/TFLite) as a framing aid only, pinch-to-zoom, full-screen camera preview, reverse-geocoded full address shown instead of raw lat/lng, a public status-tracking page (received → verified → assigned → in progress → resolved), and friendly (non-raw-exception) error states throughout.
+- **Self-improvement feedback loop (early stage)**: `Ticket` rows store Gemini's original category/severity/description suggestion (`aiCategory`/`aiSeverity`/`aiDescription`) alongside the citizen's final (possibly corrected) values — no retraining pipeline yet, but the data needed to eventually refine the classification prompt is now being captured on every ticket.
+- Release APKs are built, signed (real release keystore), and verified via GitHub Actions CI (the native object-detection dependency needs a real x86_64 build machine, which is why this isn't built locally).
+
+**Not implemented (still just the spec above or the "What's next" list):**
+- Microsoft sign-in (Google only).
+- Map-based issue clustering, WhatsApp reporting, multilingual support, SLA analytics, image-similarity duplicate detection.
+- Any real municipal/government system integration (intentionally out of scope).
 
 ## Inspiration
 
