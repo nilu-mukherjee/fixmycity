@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:object_detection/object_detection.dart';
@@ -25,6 +27,11 @@ class _LiveCameraScreenState extends State<LiveCameraScreen> {
   bool _capturing = false;
   String? _error;
 
+  double _minZoom = 1.0;
+  double _maxZoom = 1.0;
+  double _zoom = 1.0;
+  double _zoomAtGestureStart = 1.0;
+
   @override
   void initState() {
     super.initState();
@@ -47,10 +54,15 @@ class _LiveCameraScreenState extends State<LiveCameraScreen> {
       if (!mounted) return;
 
       final detector = await ObjectDetector.create();
+      final minZoom = await controller.getMinZoomLevel();
+      final maxZoom = await controller.getMaxZoomLevel();
+      if (!mounted) return;
 
       setState(() {
         _controller = controller;
         _detector = detector;
+        _minZoom = minZoom;
+        _maxZoom = maxZoom;
       });
 
       await controller.startImageStream(_onFrame);
@@ -95,6 +107,22 @@ class _LiveCameraScreenState extends State<LiveCameraScreen> {
     }
   }
 
+  void _onScaleStart(ScaleStartDetails details) {
+    _zoomAtGestureStart = _zoom;
+  }
+
+  Future<void> _onScaleUpdate(ScaleUpdateDetails details) async {
+    final controller = _controller;
+    if (controller == null || _maxZoom <= _minZoom) return;
+    final next = (_zoomAtGestureStart * details.scale).clamp(_minZoom, _maxZoom);
+    if (next == _zoom) return;
+    _zoom = next;
+    // Fire-and-forget: setZoomLevel calls are cheap and frequent during a
+    // pinch gesture, no need to await each one before sending the next.
+    unawaited(controller.setZoomLevel(next));
+    setState(() {});
+  }
+
   Future<void> _capture() async {
     final controller = _controller;
     if (controller == null || _capturing) return;
@@ -129,11 +157,6 @@ class _LiveCameraScreenState extends State<LiveCameraScreen> {
 
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
-        title: const Text('Report an Issue'),
-      ),
       body: SafeArea(
         child: _error != null
             ? Center(
@@ -148,43 +171,82 @@ class _LiveCameraScreenState extends State<LiveCameraScreen> {
               )
             : controller == null || !controller.value.isInitialized
                 ? const Center(child: CircularProgressIndicator())
-                : Column(
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        child: Text(
-                          "Detecting objects in frame to help you focus — this "
-                          "doesn't identify the issue itself, that happens after "
-                          "you take the photo.",
-                          style: TextStyle(color: Colors.white70, fontSize: 12),
-                          textAlign: TextAlign.center,
-                        ),
+                : _buildCamera(controller),
+      ),
+    );
+  }
+
+  Widget _buildCamera(CameraController controller) {
+    // previewSize is reported in the sensor's landscape terms — swap for a
+    // portrait-oriented cover-fit, matching the same correction the aspect
+    // ratio needed.
+    final preview = controller.value.previewSize!;
+    final portraitPreviewSize = Size(preview.height, preview.width);
+
+    return GestureDetector(
+      onScaleStart: _onScaleStart,
+      onScaleUpdate: _onScaleUpdate,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          FittedBox(
+            fit: BoxFit.cover,
+            child: SizedBox(
+              width: portraitPreviewSize.width,
+              height: portraitPreviewSize.height,
+              child: CameraPreview(controller),
+            ),
+          ),
+          if (_lastImageSize != null)
+            CustomPaint(
+              painter: ObjectCameraDetectionPainter(
+                detections: _detections,
+                imageSize: _lastImageSize!,
+                mirrorHorizontally: false,
+              ),
+            ),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              bottom: false,
+              child: Container(
+                color: Colors.black45,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                    const Expanded(
+                      child: Text(
+                        "Detecting objects in frame to help you focus — this "
+                        "doesn't identify the issue itself, that happens after "
+                        "you take the photo.",
+                        style: TextStyle(color: Colors.white70, fontSize: 12),
                       ),
-                      Expanded(
-                        child: ObjectDetectionCameraOverlay(
-                          cameraPreview: CameraPreview(controller),
-                          // Inverted: `controller.value.aspectRatio` is
-                          // reported in the sensor's landscape terms, but the
-                          // UI here is portrait — confirmed empirically (the
-                          // uninverted ratio rendered the preview as a thin
-                          // horizontal strip instead of filling the screen).
-                          displayAspectRatio: 1 / controller.value.aspectRatio,
-                          mirrorHorizontally: false,
-                          detections: _detections,
-                          imageSize: _lastImageSize,
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: FloatingActionButton.large(
-                          onPressed: _capturing ? null : _capture,
-                          child: _capturing
-                              ? const CircularProgressIndicator()
-                              : const Icon(Icons.camera_alt),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 24,
+            child: Center(
+              child: FloatingActionButton.large(
+                onPressed: _capturing ? null : _capture,
+                child: _capturing
+                    ? const CircularProgressIndicator()
+                    : const Icon(Icons.camera_alt),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

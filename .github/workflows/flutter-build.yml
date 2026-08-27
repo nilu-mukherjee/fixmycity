@@ -20,6 +20,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # ubuntu-latest only has ~14GB free after preinstalled tooling, which
+      # isn't enough headroom for Android SDK/NDK + Gradle/pub caches +
+      # build output all at once — a prior run OOM'd the disk trying to
+      # save its cache at the end (build itself had already succeeded).
+      # Reclaim space from large preinstalled SDKs this workflow never uses.
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup \
+            /opt/hostedtoolcache/CodeQL /usr/local/share/powershell \
+            /usr/local/lib/node_modules
+          sudo docker image prune -af || true
+          df -h /
+
       - uses: actions/setup-java@v4
         with:
           distribution: "temurin"
