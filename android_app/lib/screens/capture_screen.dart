@@ -1,20 +1,23 @@
 import 'dart:io';
 
+import 'package:camera/camera.dart' show XFile;
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:image_picker/image_picker.dart';
 
 import '../models/report.dart';
 import '../services/http_report_api.dart';
 import '../services/service_locator.dart';
+import 'live_camera_screen.dart';
 import 'presubmit_screen.dart';
 
 /// Step 1 of the citizen flow (project.md): open the app, start a complaint,
-/// take a plain photo (no on-device/live object detection — that's server-
-/// side via Gemini Vision), capture location, then send it off for AI
-/// classification automatically — as soon as both are ready, with no extra
-/// button tap. Category, severity, and description are all editable next,
-/// on [PresubmitScreen]'s form, so there's nothing to fill in here first.
+/// take a live photo (via [LiveCameraScreen] — a plain capture UI with an
+/// on-device object-detection overlay as a framing aid only; the real
+/// civic-issue classification stays server-side via Gemini Vision), capture
+/// location, then send it off for AI classification automatically — as soon
+/// as both are ready, with no extra button tap. Category, severity, and
+/// description are all editable next, on [PresubmitScreen]'s form, so
+/// there's nothing to fill in here first.
 class CaptureScreen extends StatefulWidget {
   const CaptureScreen({super.key});
 
@@ -23,8 +26,6 @@ class CaptureScreen extends StatefulWidget {
 }
 
 class _CaptureScreenState extends State<CaptureScreen> {
-  final _picker = ImagePicker();
-
   XFile? _photo;
   Position? _position;
   bool _locating = false;
@@ -33,13 +34,8 @@ class _CaptureScreenState extends State<CaptureScreen> {
 
   Future<void> _takePhoto() async {
     try {
-      final photo = await _picker.pickImage(
-        // Camera only, deliberately — a report's location is tied to where
-        // the photo was taken, so a gallery pick (an old photo, or one from
-        // somewhere else entirely) would attach the wrong place to the issue.
-        source: ImageSource.camera,
-        maxWidth: 1600,
-        imageQuality: 85,
+      final photo = await Navigator.of(context).push<XFile>(
+        MaterialPageRoute(builder: (_) => const LiveCameraScreen()),
       );
       if (photo != null) {
         setState(() {
