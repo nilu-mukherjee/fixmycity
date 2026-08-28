@@ -12,6 +12,7 @@ dist-ssr
 __unconfig*
 todos.json
 mcp-todos.json
+video/
 
 # Claude Code project instructions — kept locally, not published
 CLAUDE.md
