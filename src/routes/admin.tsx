@@ -463,20 +463,34 @@ function Header({
     <header className="sticky top-0 z-30 border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
       <div className="mx-auto flex max-w-(--breakpoint-2xl) flex-wrap items-center justify-between gap-3 px-4 py-4 md:px-6">
         <div className="flex items-center gap-3">
-          <svg
-            viewBox="0 0 24 24"
-            width="28"
-            height="28"
-            aria-hidden="true"
-            focusable="false"
-            className="shrink-0 text-[#e2571a] dark:text-[#f2712f]"
-          >
-            <g transform="rotate(45 12 12)">
-              <rect x="7" y="2" width="10" height="6" rx="1.5" fill="currentColor" />
-              <rect x="10.5" y="9" width="3" height="12" rx="1.5" fill="currentColor" />
-            </g>
-          </svg>
-          <div>
+          <div className="relative">
+            <svg
+              viewBox="0 0 24 24"
+              width="14"
+              height="14"
+              aria-hidden="true"
+              focusable="false"
+              className="absolute -top-1.5 -left-2 text-[#e2571a] dark:text-[#f2712f]"
+            >
+              <g transform="rotate(45 12 12)">
+                <rect
+                  x="7"
+                  y="2"
+                  width="10"
+                  height="6"
+                  rx="1.5"
+                  fill="currentColor"
+                />
+                <rect
+                  x="10.5"
+                  y="9"
+                  width="3"
+                  height="12"
+                  rx="1.5"
+                  fill="currentColor"
+                />
+              </g>
+            </svg>
             <p
               style={{ fontFamily: "'Staatliches', sans-serif" }}
               className="text-xl tracking-wide text-gray-800 dark:text-white/90"
@@ -518,11 +532,33 @@ function Header({
 function SidebarRail() {
   return (
     <aside className="hidden w-[90px] shrink-0 flex-col items-center border-r border-gray-200 bg-white py-8 dark:border-gray-800 dark:bg-black sm:flex">
-      <img
-        src="/favicon.png"
-        alt="FixMyCity"
-        className="mb-8 size-11 object-contain"
-      />
+      <svg
+        viewBox="0 0 24 24"
+        width="28"
+        height="28"
+        aria-hidden="true"
+        focusable="false"
+        className="mb-8 shrink-0 text-[#e2571a] dark:text-[#f2712f]"
+      >
+        <g transform="rotate(45 12 12)">
+          <rect
+            x="7"
+            y="2"
+            width="10"
+            height="6"
+            rx="1.5"
+            fill="currentColor"
+          />
+          <rect
+            x="10.5"
+            y="9"
+            width="3"
+            height="12"
+            rx="1.5"
+            fill="currentColor"
+          />
+        </g>
+      </svg>
       <nav className="flex flex-col items-center gap-2">
         <RailIcon label="Issue Queue" active>
           <path

@@ -122,15 +122,18 @@
   text-decoration: none;
   color: var(--ink);
 }
-.landing .brand .hammer {
-  color: var(--accent);
-  flex-shrink: 0;
-  align-self: center;
-}
 .landing .brand .mark {
+  position: relative;
+  display: inline-block;
   font-family: 'Staatliches', sans-serif;
   font-size: 1.5rem;
   letter-spacing: 0.03em;
+}
+.landing .brand .hammer {
+  position: absolute;
+  top: -7px;
+  left: -9px;
+  color: var(--accent);
 }
 .landing .brand .mark span {
   color: var(--accent);

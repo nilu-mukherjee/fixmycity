@@ -49,11 +49,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
+        title: Stack(
+          clipBehavior: Clip.none,
           children: [
-            const HammerIcon(size: 28),
-            const SizedBox(width: 10),
             RichText(
               text: const TextSpan(
                 style: TextStyle(
@@ -71,6 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
+            const Positioned(top: -5, left: -7, child: HammerIcon(size: 13)),
           ],
         ),
         actions: [

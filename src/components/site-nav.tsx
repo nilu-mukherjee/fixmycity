@@ -9,20 +9,34 @@ export function SiteNav() {
     <header className="nav">
       <div className="wrap">
         <Link to="/" className="brand">
-          <svg
-            className="hammer"
-            viewBox="0 0 24 24"
-            width="20"
-            height="20"
-            aria-hidden="true"
-            focusable="false"
-          >
-            <g transform="rotate(45 12 12)">
-              <rect x="7" y="2" width="10" height="6" rx="1.5" fill="currentColor" />
-              <rect x="10.5" y="9" width="3" height="12" rx="1.5" fill="currentColor" />
-            </g>
-          </svg>
           <span className="mark">
+            <svg
+              className="hammer"
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <g transform="rotate(45 12 12)">
+                <rect
+                  x="7"
+                  y="2"
+                  width="10"
+                  height="6"
+                  rx="1.5"
+                  fill="currentColor"
+                />
+                <rect
+                  x="10.5"
+                  y="9"
+                  width="3"
+                  height="12"
+                  rx="1.5"
+                  fill="currentColor"
+                />
+              </g>
+            </svg>
             Fix<span>My</span>City
           </span>
           <span className="tag">BETA · BLR</span>

@@ -42,24 +42,32 @@ class _SignInScreenState extends State<SignInScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const HammerIcon(size: 72),
-              const SizedBox(height: 16),
-              RichText(
-                text: const TextSpan(
-                  style: TextStyle(
-                    fontFamily: 'Staatliches',
-                    fontSize: 32,
-                    color: Colors.black,
-                  ),
-                  children: [
-                    TextSpan(text: 'Fix'),
-                    TextSpan(
-                      text: 'My',
-                      style: TextStyle(color: Color(0xFFE2571A)),
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  RichText(
+                    text: const TextSpan(
+                      style: TextStyle(
+                        fontFamily: 'Staatliches',
+                        fontSize: 32,
+                        color: Colors.black,
+                      ),
+                      children: [
+                        TextSpan(text: 'Fix'),
+                        TextSpan(
+                          text: 'My',
+                          style: TextStyle(color: Color(0xFFE2571A)),
+                        ),
+                        TextSpan(text: 'City'),
+                      ],
                     ),
-                    TextSpan(text: 'City'),
-                  ],
-                ),
+                  ),
+                  const Positioned(
+                    top: -7,
+                    left: -10,
+                    child: HammerIcon(size: 18),
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
               const Text(
