@@ -18,9 +18,9 @@ class _SignInScreenState extends State<SignInScreen> {
     try {
       await authService.signIn();
       if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-      );
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const HomeScreen()));
     } catch (e) {
       debugPrint('Sign-in failed: $e');
       if (!mounted) return;
@@ -50,9 +50,22 @@ class _SignInScreenState extends State<SignInScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
-                'FixMyCity',
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+              RichText(
+                text: const TextSpan(
+                  style: TextStyle(
+                    fontFamily: 'Staatliches',
+                    fontSize: 32,
+                    color: Colors.black,
+                  ),
+                  children: [
+                    TextSpan(text: 'Fix'),
+                    TextSpan(
+                      text: 'My',
+                      style: TextStyle(color: Color(0xFFE2571A)),
+                    ),
+                    TextSpan(text: 'City'),
+                  ],
+                ),
               ),
               const SizedBox(height: 8),
               const Text(

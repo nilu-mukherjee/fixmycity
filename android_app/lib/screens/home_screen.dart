@@ -31,18 +31,17 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _openCapture() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const CaptureScreen()),
-    );
+    await Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const CaptureScreen()));
     _refresh();
   }
 
   Future<void> _signOut() async {
     await authService.signOut();
     if (!mounted) return;
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const SignInScreen()),
-    );
+    Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (_) => const SignInScreen()));
   }
 
   @override
@@ -61,7 +60,23 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const SizedBox(width: 10),
-            const Text('FixMyCity'),
+            RichText(
+              text: const TextSpan(
+                style: TextStyle(
+                  fontFamily: 'Staatliches',
+                  fontSize: 22,
+                  color: Colors.black,
+                ),
+                children: [
+                  TextSpan(text: 'Fix'),
+                  TextSpan(
+                    text: 'My',
+                    style: TextStyle(color: Color(0xFFE2571A)),
+                  ),
+                  TextSpan(text: 'City'),
+                ],
+              ),
+            ),
           ],
         ),
         actions: [
@@ -114,7 +129,9 @@ class _HomeScreenState extends State<HomeScreen> {
               return ListView(
                 children: const [
                   SizedBox(height: 120),
-                  Center(child: Text('No reports yet. Tap + to report an issue.')),
+                  Center(
+                    child: Text('No reports yet. Tap + to report an issue.'),
+                  ),
                 ],
               );
             }
@@ -171,7 +188,9 @@ class _TicketTile extends StatelessWidget {
       child: InkWell(
         onTap: () {
           Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => TicketDetailScreen(ticket: ticket)),
+            MaterialPageRoute(
+              builder: (_) => TicketDetailScreen(ticket: ticket),
+            ),
           );
         },
         child: Padding(
@@ -182,7 +201,10 @@ class _TicketTile extends StatelessWidget {
               CircleAvatar(
                 radius: 22,
                 backgroundColor: theme.colorScheme.primaryContainer,
-                child: Icon(_categoryIcon, color: theme.colorScheme.onPrimaryContainer),
+                child: Icon(
+                  _categoryIcon,
+                  color: theme.colorScheme.onPrimaryContainer,
+                ),
               ),
               const SizedBox(width: 12),
               // Expanded + explicit maxLines/ellipsis (instead of ListTile's
@@ -224,7 +246,10 @@ class _TicketTile extends StatelessWidget {
                         Container(
                           width: 8,
                           height: 8,
-                          decoration: BoxDecoration(color: _statusColor, shape: BoxShape.circle),
+                          decoration: BoxDecoration(
+                            color: _statusColor,
+                            shape: BoxShape.circle,
+                          ),
                         ),
                         const SizedBox(width: 6),
                         Expanded(
@@ -249,16 +274,24 @@ class _TicketTile extends StatelessWidget {
                       children: [
                         Text(
                           DateFormat.yMMMd().format(ticket.createdAt),
-                          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.outline,
+                          ),
                         ),
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.shield_outlined, size: 14, color: theme.colorScheme.outline),
+                            Icon(
+                              Icons.shield_outlined,
+                              size: 14,
+                              color: theme.colorScheme.outline,
+                            ),
                             const SizedBox(width: 3),
                             Text(
                               'Trust ${ticket.trustScore.total}/100',
-                              style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.outline,
+                              ),
                             ),
                           ],
                         ),

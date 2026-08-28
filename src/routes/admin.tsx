@@ -8,7 +8,23 @@ import { orpc } from '#/orpc/client'
 
 import type { AdminTicket } from '#/orpc/router/admin'
 
-export const Route = createFileRoute('/admin')({ component: AdminConsole })
+export const Route = createFileRoute('/admin')({
+  head: () => ({
+    links: [
+      { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+      {
+        rel: 'preconnect',
+        href: 'https://fonts.gstatic.com',
+        crossOrigin: 'anonymous',
+      },
+      {
+        rel: 'stylesheet',
+        href: 'https://fonts.googleapis.com/css2?family=Staatliches&display=swap',
+      },
+    ],
+  }),
+  component: AdminConsole,
+})
 
 type Category = AdminTicket['category']
 type Severity = AdminTicket['severity']
@@ -36,9 +52,11 @@ const SEVERITY_ORDER: Array<Severity> = ['low', 'medium', 'high', 'emergency']
 /** TailAdmin-style badge tones — light bg + colored text, brighter text on dark bg. */
 const SEVERITY_BADGE: Record<Severity, string> = {
   low: 'bg-success-50 text-success-700 dark:bg-success-500/15 dark:text-success-500',
-  medium: 'bg-warning-50 text-warning-700 dark:bg-warning-500/15 dark:text-warning-500',
+  medium:
+    'bg-warning-50 text-warning-700 dark:bg-warning-500/15 dark:text-warning-500',
   high: 'bg-orange-50 text-orange-700 dark:bg-orange-500/15 dark:text-orange-400',
-  emergency: 'bg-error-50 text-error-700 dark:bg-error-500/15 dark:text-error-500',
+  emergency:
+    'bg-error-50 text-error-700 dark:bg-error-500/15 dark:text-error-500',
 }
 
 const STATUS_LABEL: Record<Status, string> = {
@@ -52,9 +70,12 @@ const STATUS_LABEL: Record<Status, string> = {
 const STATUS_BADGE: Record<Status, string> = {
   received: 'bg-gray-100 text-gray-700 dark:bg-white/5 dark:text-gray-400',
   verified: 'bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400',
-  assigned: 'bg-theme-purple-50 text-theme-purple-700 dark:bg-theme-purple-500/15 dark:text-theme-purple-500',
-  in_progress: 'bg-warning-50 text-warning-700 dark:bg-warning-500/15 dark:text-warning-500',
-  resolved: 'bg-success-50 text-success-700 dark:bg-success-500/15 dark:text-success-500',
+  assigned:
+    'bg-theme-purple-50 text-theme-purple-700 dark:bg-theme-purple-500/15 dark:text-theme-purple-500',
+  in_progress:
+    'bg-warning-50 text-warning-700 dark:bg-warning-500/15 dark:text-warning-500',
+  resolved:
+    'bg-success-50 text-success-700 dark:bg-success-500/15 dark:text-success-500',
 }
 
 const STATUS_PIPELINE: Array<Status> = [
@@ -67,7 +88,9 @@ const STATUS_PIPELINE: Array<Status> = [
 
 function nextStatus(status: Status): Status | null {
   const i = STATUS_PIPELINE.indexOf(status)
-  return i === -1 || i === STATUS_PIPELINE.length - 1 ? null : STATUS_PIPELINE[i + 1]
+  return i === -1 || i === STATUS_PIPELINE.length - 1
+    ? null
+    : STATUS_PIPELINE[i + 1]
 }
 
 function formatTicketId(ticketNumber: number): string {
@@ -103,10 +126,21 @@ interface MonthOverMonth {
  * caller should render a negative pct as "good" (green), not the usual
  * business-KPI convention of "up = good".
  */
-function monthOverMonth(tickets: Array<AdminTicket>, severity: Severity): MonthOverMonth {
+function monthOverMonth(
+  tickets: Array<AdminTicket>,
+  severity: Severity,
+): MonthOverMonth {
   const now = new Date()
-  const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime()
-  const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).getTime()
+  const thisMonthStart = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    1,
+  ).getTime()
+  const lastMonthStart = new Date(
+    now.getFullYear(),
+    now.getMonth() - 1,
+    1,
+  ).getTime()
 
   let thisMonth = 0
   let lastMonth = 0
@@ -120,7 +154,10 @@ function monthOverMonth(tickets: Array<AdminTicket>, severity: Severity): MonthO
   if (lastMonth === 0) {
     return { pct: null, isNew: thisMonth > 0 }
   }
-  return { pct: Math.round(((thisMonth - lastMonth) / lastMonth) * 100), isNew: false }
+  return {
+    pct: Math.round(((thisMonth - lastMonth) / lastMonth) * 100),
+    isNew: false,
+  }
 }
 
 function trustTotal(score: AdminTicket['trustScore']): number {
@@ -132,16 +169,27 @@ function trustTotal(score: AdminTicket['trustScore']): number {
   )
 }
 
-type SortKey = 'category' | 'severity' | 'status' | 'department' | 'trust' | 'reported'
+type SortKey =
+  'category' | 'severity' | 'status' | 'department' | 'trust' | 'reported'
 
-function compareBySortKey(key: SortKey, a: AdminTicket, b: AdminTicket): number {
+function compareBySortKey(
+  key: SortKey,
+  a: AdminTicket,
+  b: AdminTicket,
+): number {
   switch (key) {
     case 'category':
-      return CATEGORY_LABEL[a.category].localeCompare(CATEGORY_LABEL[b.category])
+      return CATEGORY_LABEL[a.category].localeCompare(
+        CATEGORY_LABEL[b.category],
+      )
     case 'severity':
-      return SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity)
+      return (
+        SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity)
+      )
     case 'status':
-      return STATUS_PIPELINE.indexOf(a.status) - STATUS_PIPELINE.indexOf(b.status)
+      return (
+        STATUS_PIPELINE.indexOf(a.status) - STATUS_PIPELINE.indexOf(b.status)
+      )
     case 'department':
       return a.department.localeCompare(b.department)
     case 'trust':
@@ -191,15 +239,20 @@ function AdminConsole() {
   const filtered = useMemo(() => {
     const result = tickets
       .filter((t) => statusFilter.size === 0 || statusFilter.has(t.status))
-      .filter((t) => severityFilter.size === 0 || severityFilter.has(t.severity))
+      .filter(
+        (t) => severityFilter.size === 0 || severityFilter.has(t.severity),
+      )
 
     return [...result].sort((a, b) => {
       if (sortColumn) {
         const cmp = compareBySortKey(sortColumn, a, b)
         return sortAsc ? cmp : -cmp
       }
-      const sevDiff = SEVERITY_ORDER.indexOf(b.severity) - SEVERITY_ORDER.indexOf(a.severity)
-      return sevDiff !== 0 ? sevDiff : b.createdAt.getTime() - a.createdAt.getTime()
+      const sevDiff =
+        SEVERITY_ORDER.indexOf(b.severity) - SEVERITY_ORDER.indexOf(a.severity)
+      return sevDiff !== 0
+        ? sevDiff
+        : b.createdAt.getTime() - a.createdAt.getTime()
     })
   }, [tickets, statusFilter, severityFilter, sortColumn, sortAsc])
 
@@ -233,7 +286,9 @@ function AdminConsole() {
   }
 
   return (
-    <div className={`admin flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900 ${isDark ? 'dark' : ''}`}>
+    <div
+      className={`admin flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900 ${isDark ? 'dark' : ''}`}
+    >
       <SidebarRail />
       <div className="flex flex-1 flex-col overflow-y-auto">
         <Header
@@ -251,9 +306,12 @@ function AdminConsole() {
           <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
             <div className="flex flex-col gap-4 border-b border-gray-200 px-4 py-4 sm:px-5 lg:flex-row lg:items-center lg:justify-between dark:border-gray-800">
               <div>
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Reported Issues</h3>
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
+                  Reported Issues
+                </h3>
                 <p className="text-theme-sm text-gray-500 dark:text-gray-400">
-                  {filtered.length} issue{filtered.length === 1 ? '' : 's'} matching the filters above
+                  {filtered.length} issue{filtered.length === 1 ? '' : 's'}{' '}
+                  matching the filters above
                 </p>
               </div>
               <div className="inline-flex h-11 w-full gap-0.5 overflow-x-auto rounded-lg bg-gray-100 p-0.5 sm:w-auto lg:min-w-fit dark:bg-gray-900">
@@ -292,17 +350,57 @@ function AdminConsole() {
                     <thead>
                       <tr className="border-b border-gray-100 dark:border-gray-800">
                         <Th>ID</Th>
-                        <SortableTh label="Issue" sortKey="category" sortColumn={sortColumn} sortAsc={sortAsc} onSort={handleSort} />
-                        <SortableTh label="Severity" sortKey="severity" sortColumn={sortColumn} sortAsc={sortAsc} onSort={handleSort} />
-                        <SortableTh label="Department" sortKey="department" sortColumn={sortColumn} sortAsc={sortAsc} onSort={handleSort} />
-                        <SortableTh label="Trust" sortKey="trust" sortColumn={sortColumn} sortAsc={sortAsc} onSort={handleSort} />
-                        <SortableTh label="Reported" sortKey="reported" sortColumn={sortColumn} sortAsc={sortAsc} onSort={handleSort} />
-                        <SortableTh label="Status" sortKey="status" sortColumn={sortColumn} sortAsc={sortAsc} onSort={handleSort} />
+                        <SortableTh
+                          label="Issue"
+                          sortKey="category"
+                          sortColumn={sortColumn}
+                          sortAsc={sortAsc}
+                          onSort={handleSort}
+                        />
+                        <SortableTh
+                          label="Severity"
+                          sortKey="severity"
+                          sortColumn={sortColumn}
+                          sortAsc={sortAsc}
+                          onSort={handleSort}
+                        />
+                        <SortableTh
+                          label="Department"
+                          sortKey="department"
+                          sortColumn={sortColumn}
+                          sortAsc={sortAsc}
+                          onSort={handleSort}
+                        />
+                        <SortableTh
+                          label="Trust"
+                          sortKey="trust"
+                          sortColumn={sortColumn}
+                          sortAsc={sortAsc}
+                          onSort={handleSort}
+                        />
+                        <SortableTh
+                          label="Reported"
+                          sortKey="reported"
+                          sortColumn={sortColumn}
+                          sortAsc={sortAsc}
+                          onSort={handleSort}
+                        />
+                        <SortableTh
+                          label="Status"
+                          sortKey="status"
+                          sortColumn={sortColumn}
+                          sortAsc={sortAsc}
+                          onSort={handleSort}
+                        />
                       </tr>
                     </thead>
                     <tbody>
                       {pageRows.map((t) => (
-                        <TicketRow key={t.id} ticket={t} onClick={() => setSelectedId(t.id)} />
+                        <TicketRow
+                          key={t.id}
+                          ticket={t}
+                          onClick={() => setSelectedId(t.id)}
+                        />
                       ))}
                     </tbody>
                   </table>
@@ -310,7 +408,8 @@ function AdminConsole() {
 
                 <div className="flex flex-col items-center justify-between gap-3 border-t border-gray-200 px-4 py-4 sm:flex-row sm:px-5 dark:border-gray-800">
                   <p className="text-theme-xs text-gray-500 dark:text-gray-400">
-                    Showing {pageRows.length === 0 ? 0 : pageStart + 1}–{pageStart + pageRows.length} of {filtered.length}
+                    Showing {pageRows.length === 0 ? 0 : pageStart + 1}–
+                    {pageStart + pageRows.length} of {filtered.length}
                   </p>
                   <div className="flex items-center gap-3">
                     <button
@@ -327,7 +426,9 @@ function AdminConsole() {
                     <button
                       type="button"
                       disabled={clampedPage >= totalPages}
-                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      onClick={() =>
+                        setPage((p) => Math.min(totalPages, p + 1))
+                      }
                       className="shadow-theme-xs rounded-lg border border-gray-300 bg-white px-3 py-2 text-theme-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03]"
                     >
                       Next
@@ -340,7 +441,9 @@ function AdminConsole() {
         </main>
       </div>
 
-      {selected && <DetailPanel ticket={selected} onClose={() => setSelectedId(null)} />}
+      {selected && (
+        <DetailPanel ticket={selected} onClose={() => setSelectedId(null)} />
+      )}
     </div>
   )
 }
@@ -360,16 +463,26 @@ function Header({
     <header className="sticky top-0 z-30 border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
       <div className="mx-auto flex max-w-(--breakpoint-2xl) flex-wrap items-center justify-between gap-3 px-4 py-4 md:px-6">
         <div className="flex items-center gap-3">
-          <img src="/favicon.png" alt="" className="size-11 shrink-0 object-contain" />
+          <img
+            src="/favicon.png"
+            alt=""
+            className="size-11 shrink-0 object-contain"
+          />
           <div>
-            <p className="text-theme-xs font-medium tracking-wide text-gray-400 uppercase dark:text-gray-500">
-              FixMyCity
+            <p
+              style={{ fontFamily: "'Staatliches', sans-serif" }}
+              className="text-xl tracking-wide text-gray-800 dark:text-white/90"
+            >
+              Fix<span className="text-[#e2571a] dark:text-[#f2712f]">My</span>
+              City
             </p>
           </div>
         </div>
         <div className="flex items-center gap-4">
           <p className="text-theme-sm text-gray-500 dark:text-gray-400">
-            <span className="font-semibold text-gray-800 dark:text-white/90">{openCount}</span>{' '}
+            <span className="font-semibold text-gray-800 dark:text-white/90">
+              {openCount}
+            </span>{' '}
             open of {totalCount}
           </p>
           <button
@@ -397,7 +510,11 @@ function Header({
 function SidebarRail() {
   return (
     <aside className="hidden w-[90px] shrink-0 flex-col items-center border-r border-gray-200 bg-white py-8 dark:border-gray-800 dark:bg-black sm:flex">
-      <img src="/favicon.png" alt="FixMyCity" className="mb-8 size-11 object-contain" />
+      <img
+        src="/favicon.png"
+        alt="FixMyCity"
+        className="mb-8 size-11 object-contain"
+      />
       <nav className="flex flex-col items-center gap-2">
         <RailIcon label="Issue Queue" active>
           <path
@@ -454,12 +571,19 @@ function RailIcon({
         type="button"
         disabled={!active}
         aria-label={label}
-        className={`flex h-11 w-11 items-center justify-center rounded-lg transition-colors ${active
-          ? 'bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-400'
-          : 'cursor-not-allowed text-gray-400 dark:text-gray-600'
-          }`}
+        className={`flex h-11 w-11 items-center justify-center rounded-lg transition-colors ${
+          active
+            ? 'bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-400'
+            : 'cursor-not-allowed text-gray-400 dark:text-gray-600'
+        }`}
       >
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          xmlns="http://www.w3.org/2000/svg"
+        >
           {children}
         </svg>
       </button>
@@ -508,7 +632,11 @@ function SortableTh({
             height="5"
             viewBox="0 0 8 5"
             fill="none"
-            className={isActive && sortAsc ? 'text-gray-600 dark:text-gray-300' : 'text-gray-300 dark:text-gray-700'}
+            className={
+              isActive && sortAsc
+                ? 'text-gray-600 dark:text-gray-300'
+                : 'text-gray-300 dark:text-gray-700'
+            }
           >
             <path
               d="M4.40962 0.585167C4.21057 0.300808 3.78943 0.300807 3.59038 0.585166L1.05071 4.21327C0.81874 4.54466 1.05582 5 1.46033 5H6.53967C6.94418 5 7.18126 4.54466 6.94929 4.21327L4.40962 0.585167Z"
@@ -520,7 +648,11 @@ function SortableTh({
             height="5"
             viewBox="0 0 8 5"
             fill="none"
-            className={isActive && !sortAsc ? 'text-gray-600 dark:text-gray-300' : 'text-gray-300 dark:text-gray-700'}
+            className={
+              isActive && !sortAsc
+                ? 'text-gray-600 dark:text-gray-300'
+                : 'text-gray-300 dark:text-gray-700'
+            }
           >
             <path
               d="M4.40962 4.41483C4.21057 4.69919 3.78943 4.69919 3.59038 4.41483L1.05071 0.786732C0.81874 0.455343 1.05582 0 1.46033 0H6.53967C6.94418 0 7.18126 0.455342 6.94929 0.786731L4.40962 4.41483Z"
@@ -596,10 +728,11 @@ function FilterChip({
     <button
       type="button"
       onClick={onClick}
-      className={`text-theme-sm inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 font-medium transition-colors ${active
-        ? 'border-brand-500 bg-brand-50 text-brand-700 dark:border-brand-500 dark:bg-brand-500/15 dark:text-brand-400'
-        : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50 dark:border-gray-800 dark:bg-white/[0.03] dark:text-gray-400 dark:hover:bg-white/5'
-        }`}
+      className={`text-theme-sm inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 font-medium transition-colors ${
+        active
+          ? 'border-brand-500 bg-brand-50 text-brand-700 dark:border-brand-500 dark:bg-brand-500/15 dark:text-brand-400'
+          : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50 dark:border-gray-800 dark:bg-white/[0.03] dark:text-gray-400 dark:hover:bg-white/5'
+      }`}
     >
       {label}
     </button>
@@ -618,12 +751,18 @@ function MonthOverMonthBadge({ change }: { change: MonthOverMonth }) {
         <span className="text-theme-xs rounded-full bg-gray-100 px-2 py-0.5 font-medium text-gray-600 dark:bg-white/5 dark:text-gray-400">
           New
         </span>
-        <span className="text-theme-xs text-gray-500 dark:text-gray-400">this month</span>
+        <span className="text-theme-xs text-gray-500 dark:text-gray-400">
+          this month
+        </span>
       </div>
     )
   }
   if (change.pct === null) {
-    return <span className="text-theme-xs text-gray-400 dark:text-gray-500">No data last month</span>
+    return (
+      <span className="text-theme-xs text-gray-400 dark:text-gray-500">
+        No data last month
+      </span>
+    )
   }
 
   const isIncrease = change.pct > 0
@@ -636,11 +775,15 @@ function MonthOverMonthBadge({ change }: { change: MonthOverMonth }) {
 
   return (
     <div className="flex items-center gap-1">
-      <span className={`text-theme-xs rounded-full px-2 py-0.5 font-medium ${tone}`}>
+      <span
+        className={`text-theme-xs rounded-full px-2 py-0.5 font-medium ${tone}`}
+      >
         {change.pct > 0 ? '+' : ''}
         {change.pct}%
       </span>
-      <span className="text-theme-xs text-gray-500 dark:text-gray-400">Vs last month</span>
+      <span className="text-theme-xs text-gray-500 dark:text-gray-400">
+        Vs last month
+      </span>
     </div>
   )
 }
@@ -667,7 +810,14 @@ function Badge({
 /** TailAdmin's "Light Background with Left Icon" badge alert glyph — a filled triangle, fitting for a severity indicator. */
 function AlertIcon() {
   return (
-    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="fill-current" xmlns="http://www.w3.org/2000/svg">
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 12 12"
+      fill="none"
+      className="fill-current"
+      xmlns="http://www.w3.org/2000/svg"
+    >
       <path
         fillRule="evenodd"
         clipRule="evenodd"
@@ -678,7 +828,13 @@ function AlertIcon() {
   )
 }
 
-function TicketRow({ ticket, onClick }: { ticket: AdminTicket; onClick: () => void }) {
+function TicketRow({
+  ticket,
+  onClick,
+}: {
+  ticket: AdminTicket
+  onClick: () => void
+}) {
   return (
     <tr
       onClick={onClick}
@@ -724,18 +880,30 @@ function TicketRow({ ticket, onClick }: { ticket: AdminTicket; onClick: () => vo
         {relativeTime(ticket.createdAt.getTime())}
       </td>
       <td className="px-5 py-4">
-        <Badge tone={STATUS_BADGE[ticket.status]}>{STATUS_LABEL[ticket.status]}</Badge>
+        <Badge tone={STATUS_BADGE[ticket.status]}>
+          {STATUS_LABEL[ticket.status]}
+        </Badge>
       </td>
     </tr>
   )
 }
 
-function TrustRow({ label, points, max }: { label: string; points: number; max: number }) {
+function TrustRow({
+  label,
+  points,
+  max,
+}: {
+  label: string
+  points: number
+  max: number
+}) {
   const pct = (points / max) * 100
   return (
     <div className="py-1.5">
       <div className="mb-1 flex items-center justify-between">
-        <span className="text-theme-sm text-gray-600 dark:text-gray-300">{label}</span>
+        <span className="text-theme-sm text-gray-600 dark:text-gray-300">
+          {label}
+        </span>
         <span className="text-theme-sm font-mono text-gray-500 dark:text-gray-400">
           +{points}
           <span className="text-gray-400 dark:text-gray-600">/{max}</span>
@@ -751,7 +919,13 @@ function TrustRow({ label, points, max }: { label: string; points: number; max: 
   )
 }
 
-function DetailPanel({ ticket, onClose }: { ticket: AdminTicket; onClose: () => void }) {
+function DetailPanel({
+  ticket,
+  onClose,
+}: {
+  ticket: AdminTicket
+  onClose: () => void
+}) {
   const queryClient = useQueryClient()
   const updateStatus = useMutation(orpc.updateTicketStatus.mutationOptions())
   const [pending, setPending] = useState(false)
@@ -803,9 +977,11 @@ function DetailPanel({ ticket, onClose }: { ticket: AdminTicket; onClose: () => 
         <div className="flex flex-col gap-6 p-6">
           <div className="flex items-center gap-2">
             <Badge tone={SEVERITY_BADGE[ticket.severity]} icon={<AlertIcon />}>
-          {SEVERITY_LABEL[ticket.severity]}
-        </Badge>
-            <Badge tone={STATUS_BADGE[ticket.status]}>{STATUS_LABEL[ticket.status]}</Badge>
+              {SEVERITY_LABEL[ticket.severity]}
+            </Badge>
+            <Badge tone={STATUS_BADGE[ticket.status]}>
+              {STATUS_LABEL[ticket.status]}
+            </Badge>
           </div>
 
           <p className="text-theme-xs text-gray-400 dark:text-gray-500">
@@ -827,7 +1003,9 @@ function DetailPanel({ ticket, onClose }: { ticket: AdminTicket; onClose: () => 
               <p className="text-theme-xs font-medium tracking-wide text-gray-400 uppercase dark:text-gray-500">
                 Citizen note
               </p>
-              <p className="text-theme-sm text-gray-600 dark:text-gray-400">{ticket.urgencyNote}</p>
+              <p className="text-theme-sm text-gray-600 dark:text-gray-400">
+                {ticket.urgencyNote}
+              </p>
             </div>
           )}
 
@@ -836,7 +1014,9 @@ function DetailPanel({ ticket, onClose }: { ticket: AdminTicket; onClose: () => 
               <p className="text-theme-xs font-medium tracking-wide text-gray-400 uppercase dark:text-gray-500">
                 Department
               </p>
-              <p className="text-theme-sm text-gray-700 dark:text-gray-300">{ticket.department}</p>
+              <p className="text-theme-sm text-gray-700 dark:text-gray-300">
+                {ticket.department}
+              </p>
             </div>
             <div>
               <p className="text-theme-xs font-medium tracking-wide text-gray-400 uppercase dark:text-gray-500">
@@ -852,7 +1032,10 @@ function DetailPanel({ ticket, onClose }: { ticket: AdminTicket; onClose: () => 
                   {ticket.latitude.toFixed(5)}, {ticket.longitude.toFixed(5)}
                 </a>
                 {ticket.accuracyMeters != null && (
-                  <span className="text-gray-400 dark:text-gray-500"> ±{Math.round(ticket.accuracyMeters)}m</span>
+                  <span className="text-gray-400 dark:text-gray-500">
+                    {' '}
+                    ±{Math.round(ticket.accuracyMeters)}m
+                  </span>
                 )}
               </p>
             </div>
@@ -867,10 +1050,26 @@ function DetailPanel({ ticket, onClose }: { ticket: AdminTicket; onClose: () => 
                 {total}/100
               </p>
             </div>
-            <TrustRow label="Clear image" points={ticket.trustScore.clearImagePoints} max={30} />
-            <TrustRow label="Exact location" points={ticket.trustScore.exactLocationPoints} max={30} />
-            <TrustRow label="Nearby reports" points={ticket.trustScore.nearbyReportsPoints} max={25} />
-            <TrustRow label="Recent report" points={ticket.trustScore.recentReportPoints} max={15} />
+            <TrustRow
+              label="Clear image"
+              points={ticket.trustScore.clearImagePoints}
+              max={30}
+            />
+            <TrustRow
+              label="Exact location"
+              points={ticket.trustScore.exactLocationPoints}
+              max={30}
+            />
+            <TrustRow
+              label="Nearby reports"
+              points={ticket.trustScore.nearbyReportsPoints}
+              max={25}
+            />
+            <TrustRow
+              label="Recent report"
+              points={ticket.trustScore.recentReportPoints}
+              max={15}
+            />
           </div>
         </div>
 
@@ -896,7 +1095,13 @@ function DetailPanel({ ticket, onClose }: { ticket: AdminTicket; onClose: () => 
 
 function SunIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
       <path
         fillRule="evenodd"
         clipRule="evenodd"
@@ -909,7 +1114,13 @@ function SunIcon() {
 
 function MoonIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
       <path
         d="M17.4547 11.97C17.1885 11.1934 16.944 11.4207 16.944 11.4207C15.8869 12.4035 14.4721 13.0035 12.9154 13.0035C9.64678 13.0035 6.99707 10.3538 6.99707 7.08524C6.99707 5.52854 7.5971 4.11366 8.57989 3.05657C8.79489 2.82658 8.5613 2.44684 8.24 2.5C4.21532 2.77574 1.54199 6.07486 1.54199 10.0003C1.54199 14.6717 5.32892 18.4586 10.0003 18.4586C13.9257 18.4586 17.2249 15.7853 18.1799 12.1611C18.265 11.8383 17.7267 12.2178 17.4547 11.97Z"
         fill="currentColor"
