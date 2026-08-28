@@ -850,6 +850,43 @@ function ArchitecturePage() {
             </div>
           </div>
         </section>
+
+        <section>
+          <div className="wrap">
+            <div className="section-head">
+              <p className="eyebrow">Common questions</p>
+              <h2 className="display">What judges usually ask</h2>
+            </div>
+            <div className="arch-prose">
+              <div>
+                <h3>Is FixMyCity already self-improving?</h3>
+                <p>
+                  Yes, in a specific and honest sense: not by retraining the
+                  model. The database stores Gemini&apos;s original category,
+                  severity, and description alongside the values the citizen
+                  finally approves — every correction is captured.
+                </p>
+                <p>
+                  Before classifying a new report, the agent (
+                  <code>runReportPipeline</code>) pulls the most recent
+                  corrections and folds them into its own prompt as few-shot
+                  examples: &quot;you previously guessed X here, the citizen
+                  corrected it to Y, don&apos;t repeat that.&quot; That&apos;s
+                  in-context learning from the system&apos;s own mistakes, on
+                  every single report.
+                </p>
+                <p>
+                  There is still no automated fine-tuning or retraining
+                  pipeline, and no claim here that the underlying model changes.
+                  Calling it self-training would overstate the implementation.
+                  The accurate claim is that FixMyCity actively feeds its own
+                  correction history back into the agent&apos;s reasoning, in
+                  real time, without any offline training step.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
 
       <SiteFooter />

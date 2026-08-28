@@ -108,3 +108,46 @@ export async function listTicketsForCitizen(
 export async function getTicket(id: string): Promise<Ticket | null> {
   return await prisma.ticket.findUnique({ where: { id } })
 }
+
+export interface CorrectionExample {
+  description: string
+  aiCategory: IssueCategory
+  category: IssueCategory
+  aiSeverity: Severity
+  severity: Severity
+}
+
+const CORRECTION_LOOKBACK = 30
+
+/**
+ * Most recent tickets where the citizen corrected Gemini's original
+ * category or severity guess. This is the self-improvement feedback loop:
+ * `runReportPipeline` feeds these back into the classification prompt as
+ * few-shot examples so the agent calibrates against its own past mistakes
+ * on every new report — in-context learning, not a retraining/fine-tuning
+ * pipeline (there isn't one).
+ *
+ * Filtered in application code rather than SQL (same approach as
+ * `findNearbyTickets`'s haversine filter) since Prisma can't compare two
+ * columns of the same row directly.
+ */
+export async function getRecentCorrections(
+  limit = 5,
+): Promise<CorrectionExample[]> {
+  const recent = await prisma.ticket.findMany({
+    where: { aiCategory: { not: null }, aiSeverity: { not: null } },
+    orderBy: { createdAt: 'desc' },
+    take: CORRECTION_LOOKBACK,
+  })
+
+  return recent
+    .filter((t) => t.aiCategory !== t.category || t.aiSeverity !== t.severity)
+    .slice(0, limit)
+    .map((t) => ({
+      description: t.description,
+      aiCategory: t.aiCategory!,
+      category: t.category,
+      aiSeverity: t.aiSeverity!,
+      severity: t.severity,
+    }))
+}

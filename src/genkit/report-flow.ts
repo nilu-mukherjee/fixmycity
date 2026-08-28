@@ -1,7 +1,9 @@
 import { genkit, z } from 'genkit'
 import { googleAI } from '@genkit-ai/google-genai'
 
-import { findNearbyTickets } from '#/lib/tickets'
+import { findNearbyTickets, getRecentCorrections } from '#/lib/tickets'
+
+import type { CorrectionExample } from '#/lib/tickets'
 
 const ai = genkit({ plugins: [googleAI()] })
 
@@ -70,11 +72,15 @@ const findNearbyReportsTool = ai.defineTool(
       category: z.enum(CATEGORIES),
     }),
     outputSchema: z.object({
-      count: z.number().describe('How many other reports of this category exist nearby.'),
+      count: z
+        .number()
+        .describe('How many other reports of this category exist nearby.'),
       mostRecentHoursAgo: z
         .number()
         .nullable()
-        .describe('Hours since the most recent nearby report, or null if there are none.'),
+        .describe(
+          'Hours since the most recent nearby report, or null if there are none.',
+        ),
     }),
   },
   async (input) => {
@@ -85,11 +91,45 @@ const findNearbyReportsTool = ai.defineTool(
     return {
       count: matches.length,
       mostRecentHoursAgo: matches.length
-        ? Math.min(...matches.map((m) => (Date.now() - m.createdAt.getTime()) / 3_600_000))
+        ? Math.min(
+            ...matches.map(
+              (m) => (Date.now() - m.createdAt.getTime()) / 3_600_000,
+            ),
+          )
         : null,
     }
   },
 )
+
+/**
+ * Turns recent citizen corrections into a few-shot block appended to the
+ * classification prompt — this is the actual self-improvement mechanism:
+ * in-context learning from the system's own past mistakes on every new
+ * report, no fine-tuning/retraining pipeline involved. Empty when there's
+ * no correction history yet (e.g. a fresh deployment).
+ */
+function buildCorrectionsPromptBlock(
+  corrections: CorrectionExample[],
+): string[] {
+  if (corrections.length === 0) return []
+
+  return [
+    '',
+    "Recent corrections a citizen made to this system's own past classifications — use these to calibrate your judgment on similar cases, don't just repeat the same mistake:",
+    ...corrections.map(
+      (c, i) =>
+        `${i + 1}. Photo described as: "${c.description}". Previously guessed ${c.aiCategory} / ${c.aiSeverity}, but the citizen corrected it to ${c.category} / ${c.severity}.`,
+    ),
+  ]
+}
+
+const CorrectionExampleSchema = z.object({
+  description: z.string(),
+  aiCategory: z.enum(CATEGORIES),
+  category: z.enum(CATEGORIES),
+  aiSeverity: z.enum(SEVERITIES),
+  severity: z.enum(SEVERITIES),
+})
 
 const analyzeReportFlow = ai.defineFlow(
   {
@@ -102,6 +142,11 @@ const analyzeReportFlow = ai.defineFlow(
       latitude: z.number(),
       longitude: z.number(),
       urgencyNote: z.string(),
+      // Self-improvement feedback: recent tickets where a citizen corrected
+      // Gemini's own past guess, folded into the prompt as few-shot
+      // examples (see `getRecentCorrections`). In-context learning, not a
+      // fine-tuning/retraining pipeline.
+      corrections: z.array(CorrectionExampleSchema),
     }),
     outputSchema: GeminiAnalysisSchema,
   },
@@ -132,13 +177,16 @@ const analyzeReportFlow = ai.defineFlow(
             '',
             'Write a short, factual, citizen-facing description of what the photo shows.',
             'Judge whether the photo is clear enough to verify the issue (well-lit, in focus, issue clearly visible).',
+            ...buildCorrectionsPromptBlock(input.corrections),
           ].join('\n'),
         },
       ],
     })
 
     if (!output) {
-      throw new Error('Gemini returned no structured output for report analysis')
+      throw new Error(
+        'Gemini returned no structured output for report analysis',
+      )
     }
     return output
   },
@@ -212,9 +260,11 @@ export type PresubmitResult =
     }
 
 /**
- * Orchestrates the full "presubmit" pipeline: Gemini Vision classification,
- * duplicate check against Postgres, trust score, department routing. Does
- * not persist anything — that happens once the citizen approves (see
+ * Orchestrates the full "presubmit" pipeline: fetch recent citizen
+ * corrections for the self-improvement feedback loop, Gemini Vision
+ * classification (calibrated against those corrections), duplicate check
+ * against Postgres, trust score, department routing. Does not persist
+ * anything — that happens once the citizen approves (see
  * `src/orpc/router/reports.ts`'s `createTicket`).
  */
 export async function runReportPipeline(params: {
@@ -231,14 +281,18 @@ export async function runReportPipeline(params: {
   const photoBase64 = Buffer.from(await photoResponse.arrayBuffer()).toString(
     'base64',
   )
-  const photoContentType = photoResponse.headers.get('content-type') ?? 'image/jpeg'
+  const photoContentType =
+    photoResponse.headers.get('content-type') ?? 'image/jpeg'
   const photoDataUri = `data:${photoContentType};base64,${photoBase64}`
+
+  const corrections = await getRecentCorrections()
 
   const analysis = await analyzeReportFlow({
     photoDataUri,
     latitude: params.latitude,
     longitude: params.longitude,
     urgencyNote: params.urgencyNote,
+    corrections,
   })
 
   if (!analysis.isCivicIssue) {

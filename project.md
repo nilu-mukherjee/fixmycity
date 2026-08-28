@@ -9,16 +9,20 @@ This has a stronger hackathon story than a normal AI app because it combines:
 Vision AI + agentic workflow + social impact + dashboard + real-world demo.
 Judges like projects that solve visible problems. Current hackathon writeups emphasize real operational pain points and deployable AI solutions, while 2026 idea roundups highlight specific AI agents that complete multi-step tasks and impact themes like climate, healthcare, accessibility, and public good. Express Computer
 MVP Features
+
 1. Citizen Report Form
-User uploads:
+   User uploads:
+
 - Photo of issue
 - Short description or voice note
 - Location
 - Urgency level
-Example:
-“Big pothole near Whitefield main road, dangerous for bikes.”
+  Example:
+  “Big pothole near Whitefield main road, dangerous for bikes.”
+
 2. AI Issue Classifier
-AI detects category:
+   AI detects category:
+
 - Pothole
 - Garbage
 - Streetlight
@@ -26,37 +30,44 @@ AI detects category:
 - Water leakage
 - Road blockage
 - Unsafe footpath
-It also extracts severity: low, medium, high, emergency.
+  It also extracts severity: low, medium, high, emergency.
+
 3. Duplicate Detection
-If 10 people report the same pothole, the system groups it into one issue instead of creating 10 separate tickets.
-This makes the project more realistic and impressive.
+   If 10 people report the same pothole, the system groups it into one issue instead of creating 10 separate tickets.
+   This makes the project more realistic and impressive.
 4. Department Routing Agent
-The agent decides where to route it:
+   The agent decides where to route it:
+
 - Road department
 - Waste management
 - Electricity/streetlight team
 - Water board
 - Traffic department
+
 5. Civic Dashboard
-Admin dashboard shows:
+   Admin dashboard shows:
+
 - Open issues
 - Highest-priority areas
 - Duplicate clusters
 - Department-wise pending tickets
 - Map/list view
 - SLA status
+
 6. Public Status Page
-Citizens can see:
+   Citizens can see:
+
 - Report received
 - Verified
 - Assigned
 - In progress
 - Resolved
-Agentic AI Angle
-The agent does not just answer questions. It performs a workflow:
-Input report → classify issue → check duplicate → estimate severity → route department → generate ticket → create citizen update → update dashboard.
-That “AI doing work” is much stronger for Devpost than a simple chatbot.
-Demo Flow for Devpost
+  Agentic AI Angle
+  The agent does not just answer questions. It performs a workflow:
+  Input report → classify issue → check duplicate → estimate severity → route department → generate ticket → create citizen update → update dashboard.
+  That “AI doing work” is much stronger for Devpost than a simple chatbot.
+  Demo Flow for Devpost
+
 1. Open app.
 2. Upload pothole image.
 3. AI detects: “Road damage / pothole.”
@@ -66,18 +77,19 @@ Demo Flow for Devpost
 7. Agent creates ticket for road maintenance department.
 8. Dashboard updates with priority score.
 9. Citizen gets a tracking message.
-Tech Stack for You
-Since you are strong in React/Full Stack, this is realistic:
-Frontend: React / Next.js, TypeScript, Tailwind
-Backend: FastAPI or Node.js
-Database: Supabase/PostgreSQL
-Storage: Supabase Storage/S3
-AI: Gemini/OpenAI vision model for image understanding
-Maps: Google Maps/Mapbox/OpenStreetMap
-Agent workflow: LangGraph / custom workflow engine
-Notifications: Email/WhatsApp mock integration  
-What to Build in 24–48 Hours
-Build only this:
+   Tech Stack for You
+   Since you are strong in React/Full Stack, this is realistic:
+   Frontend: React / Next.js, TypeScript, Tailwind
+   Backend: FastAPI or Node.js
+   Database: Supabase/PostgreSQL
+   Storage: Supabase Storage/S3
+   AI: Gemini/OpenAI vision model for image understanding
+   Maps: Google Maps/Mapbox/OpenStreetMap
+   Agent workflow: LangGraph / custom workflow engine
+   Notifications: Email/WhatsApp mock integration  
+   What to Build in 24–48 Hours
+   Build only this:
+
 - Report submission form
 - Image upload
 - AI category/severity detection
@@ -85,11 +97,12 @@ Build only this:
 - Admin dashboard
 - Ticket status flow
 - Devpost demo video
-Do not build real government integration. Mock the department routing.
+  Do not build real government integration. Mock the department routing.
 
 ## Extra Winning Feature: Trust Score
 
 Add a "trust score" for every complaint, built from signals available at report time:
+
 - Clear image: +30
 - Exact location: +30
 - Multiple nearby reports: +25
@@ -106,6 +119,7 @@ Target: **Google Cloud Run**, running the backend as a container. The AI classif
 Citizen-facing interface: a **Flutter app** (a separate codebase/repo from this one, not the web frontend, not a wrapper around it) — citizens open the app, submit a report, and see the issue move through the pipeline. It talks to the Cloud Run/Genkit/Postgres backend over HTTP. The admin dashboard stays on the web (TanStack Start, this repo).
 
 Citizen app flow:
+
 1. User opens the app, starts a new complaint.
 2. Camera opens; user photographs the issue (pothole, garbage, etc.). A live on-device object-detection overlay (MediaPipe/TFLite, via the `object_detection` Flutter package) runs during framing purely as a "something's in frame" confirmation — it only recognizes generic COCO classes (person, car, ...), not civic-issue categories, so it never claims to identify the actual issue. The captured photo is sent to the backend for real classification.
 3. Backend (Genkit flow + Gemini Vision) detects the issue, classifies category and severity, and returns a **presubmit** structured report.
@@ -131,6 +145,7 @@ Citizens log in via **Google** social sign-in (Better Auth's `socialProviders.go
 What's actually built and deployed, vs. still spec/aspiration above:
 
 **Live and deployed:**
+
 - Backend + admin dashboard on **Google Cloud Run** (`fixmycity-1003427733440.asia-south1.run.app`), auto-deploying via Cloud Build on every push to `main`.
 - **Postgres on Cloud SQL** is the sole data store (reports/tickets, presubmit drafts, Better Auth users/sessions) — no third-party DB.
 - Full pipeline: photo upload → GCS → Eventarc-triggered Genkit flow → Gemini Vision classification → presubmit draft → citizen review/edit → ticket creation.
@@ -139,10 +154,11 @@ What's actually built and deployed, vs. still spec/aspiration above:
 - **Department routing** — mocked mapping, no real municipal integration (per spec).
 - **Admin dashboard** — TailAdmin-style UI, human-readable sequential ticket ids (FMC001, FMC002, ...), Google Maps link per ticket, real dates + month-over-month stats.
 - **Citizen Flutter app**: Google Sign-In (tickets scoped per citizen), camera-only capture (no gallery picker) with immediate auto-analyze on capture, a live on-device object-detection overlay (MediaPipe/TFLite) as a framing aid only, pinch-to-zoom, full-screen camera preview, reverse-geocoded full address shown instead of raw lat/lng, a public status-tracking page (received → verified → assigned → in progress → resolved), and friendly (non-raw-exception) error states throughout.
-- **Self-improvement feedback loop (early stage)**: `Ticket` rows store Gemini's original category/severity/description suggestion (`aiCategory`/`aiSeverity`/`aiDescription`) alongside the citizen's final (possibly corrected) values — no retraining pipeline yet, but the data needed to eventually refine the classification prompt is now being captured on every ticket.
+- **Self-improvement feedback loop**: `Ticket` rows store Gemini's original category/severity/description suggestion (`aiCategory`/`aiSeverity`/`aiDescription`) alongside the citizen's final (possibly corrected) values. `getRecentCorrections` (`src/lib/tickets.ts`) surfaces the most recent mismatches, and `runReportPipeline` (`src/genkit/report-flow.ts`) folds them into the classification prompt as few-shot examples on every new report — the agent calibrates against its own past mistakes via in-context learning. This is not a fine-tuning/retraining pipeline; there isn't one, and nothing here changes the underlying model.
 - Release APKs are built, signed (real release keystore), and verified via GitHub Actions CI (the native object-detection dependency needs a real x86_64 build machine, which is why this isn't built locally).
 
 **Not implemented (still just the spec above or the "What's next" list):**
+
 - Microsoft sign-in (Google only).
 - Map-based issue clustering, WhatsApp reporting, multilingual support, SLA analytics, image-similarity duplicate detection.
 - Any real municipal/government system integration (intentionally out of scope).
@@ -150,24 +166,28 @@ What's actually built and deployed, vs. still spec/aspiration above:
 ## Architecture Decisions
 
 ### ADR-1: Postgres (Cloud SQL) over Convex for reports/tickets
+
 - **Context:** Needed one data layer for `Ticket`/`PresubmitDraft` plus Better Auth sessions.
 - **Decision:** Prisma on Cloud SQL Postgres; Convex removed entirely.
 - **Alternatives:** Convex (reactive queries out of the box) — rejected because it's a second platform outside GCP, and the hackathon's mandatory-GCP-service criterion rewards staying native.
 - **Consequences:** Lost live dashboard updates, replaced with TanStack Query polling every 5s. Traded a nice-to-have for one unified, judge-legible GCP stack.
 
 ### ADR-2: Event-driven classification (GCS → Eventarc → private Cloud Run) over synchronous processing
+
 - **Context:** Gemini Vision classification takes seconds; the citizen shouldn't block on it mid-upload.
 - **Decision:** Photo lands in GCS → `object.finalized` event → Eventarc → a separate, IAM-locked `fixmycity-events` Cloud Run service runs the Genkit pipeline and writes the result back to the draft.
 - **Alternatives:** Run the pipeline inline in the same request that creates the draft — rejected: couples upload latency to LLM latency, and mixes a public-facing service with a privileged pipeline that shouldn't be internet-reachable.
 - **Consequences:** Two Cloud Run services to operate instead of one, but a smaller public attack surface and a citizen flow that isn't blocked on Gemini.
 
 ### ADR-3: Haversine distance in application code over PostGIS
+
 - **Context:** Need "same category, within ~150m" duplicate lookups.
 - **Decision:** Filter by category in Postgres, then compute haversine distance in TypeScript.
 - **Alternatives:** PostGIS spatial index — rejected as unjustified operational complexity at this data volume.
 - **Consequences:** Won't scale past tens of thousands of rows without an index; explicitly fine for a hackathon pilot, and cheap to migrate later since the call site (`findNearbyTickets`) is already isolated.
 
 ### ADR-4: Mocked department routing over real municipal integration
+
 - **Context:** Explicit project constraint: no real government integration.
 - **Decision:** Static category→department lookup table, no external dispatch.
 - **Alternatives:** None seriously considered — this is a standard, judge-accepted hackathon pattern for enterprise/government integrations that can't use real data or systems, not a shortcut being defended.
