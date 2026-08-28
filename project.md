@@ -147,6 +147,32 @@ What's actually built and deployed, vs. still spec/aspiration above:
 - Map-based issue clustering, WhatsApp reporting, multilingual support, SLA analytics, image-similarity duplicate detection.
 - Any real municipal/government system integration (intentionally out of scope).
 
+## Architecture Decisions
+
+### ADR-1: Postgres (Cloud SQL) over Convex for reports/tickets
+- **Context:** Needed one data layer for `Ticket`/`PresubmitDraft` plus Better Auth sessions.
+- **Decision:** Prisma on Cloud SQL Postgres; Convex removed entirely.
+- **Alternatives:** Convex (reactive queries out of the box) — rejected because it's a second platform outside GCP, and the hackathon's mandatory-GCP-service criterion rewards staying native.
+- **Consequences:** Lost live dashboard updates, replaced with TanStack Query polling every 5s. Traded a nice-to-have for one unified, judge-legible GCP stack.
+
+### ADR-2: Event-driven classification (GCS → Eventarc → private Cloud Run) over synchronous processing
+- **Context:** Gemini Vision classification takes seconds; the citizen shouldn't block on it mid-upload.
+- **Decision:** Photo lands in GCS → `object.finalized` event → Eventarc → a separate, IAM-locked `fixmycity-events` Cloud Run service runs the Genkit pipeline and writes the result back to the draft.
+- **Alternatives:** Run the pipeline inline in the same request that creates the draft — rejected: couples upload latency to LLM latency, and mixes a public-facing service with a privileged pipeline that shouldn't be internet-reachable.
+- **Consequences:** Two Cloud Run services to operate instead of one, but a smaller public attack surface and a citizen flow that isn't blocked on Gemini.
+
+### ADR-3: Haversine distance in application code over PostGIS
+- **Context:** Need "same category, within ~150m" duplicate lookups.
+- **Decision:** Filter by category in Postgres, then compute haversine distance in TypeScript.
+- **Alternatives:** PostGIS spatial index — rejected as unjustified operational complexity at this data volume.
+- **Consequences:** Won't scale past tens of thousands of rows without an index; explicitly fine for a hackathon pilot, and cheap to migrate later since the call site (`findNearbyTickets`) is already isolated.
+
+### ADR-4: Mocked department routing over real municipal integration
+- **Context:** Explicit project constraint: no real government integration.
+- **Decision:** Static category→department lookup table, no external dispatch.
+- **Alternatives:** None seriously considered — this is a standard, judge-accepted hackathon pattern for enterprise/government integrations that can't use real data or systems, not a shortcut being defended.
+- **Consequences:** The full agentic pipeline (classify → score → dedupe → route) is real end-to-end except the very last hop, matching the hackathon brief's actual scope.
+
 ## Inspiration
 
 In cities like Bengaluru, citizens often report potholes, garbage overflow, broken streetlights, water leakage, open drains, unsafe footpaths, and traffic signal issues. But these complaints are usually unstructured, duplicated, wrongly categorized, and difficult to track. We wanted to build a smarter civic reporting system that helps citizens raise issues easily and helps city teams understand, prioritize, and route them faster.
