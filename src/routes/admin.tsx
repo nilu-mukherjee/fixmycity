@@ -463,11 +463,19 @@ function Header({
     <header className="sticky top-0 z-30 border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
       <div className="mx-auto flex max-w-(--breakpoint-2xl) flex-wrap items-center justify-between gap-3 px-4 py-4 md:px-6">
         <div className="flex items-center gap-3">
-          <img
-            src="/favicon.png"
-            alt=""
-            className="size-11 shrink-0 object-contain"
-          />
+          <svg
+            viewBox="0 0 24 24"
+            width="28"
+            height="28"
+            aria-hidden="true"
+            focusable="false"
+            className="shrink-0 text-[#e2571a] dark:text-[#f2712f]"
+          >
+            <g transform="rotate(45 12 12)">
+              <rect x="7" y="2" width="10" height="6" rx="1.5" fill="currentColor" />
+              <rect x="10.5" y="9" width="3" height="12" rx="1.5" fill="currentColor" />
+            </g>
+          </svg>
           <div>
             <p
               style={{ fontFamily: "'Staatliches', sans-serif" }}

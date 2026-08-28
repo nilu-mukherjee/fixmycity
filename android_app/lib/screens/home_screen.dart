@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../models/report.dart';
 import '../services/service_locator.dart';
+import '../widgets/hammer_icon.dart';
 import '../widgets/severity_chip.dart';
 import 'capture_screen.dart';
 import 'sign_in_screen.dart';
@@ -51,14 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(7),
-              child: Image.asset(
-                'assets/images/fixmycity-logo.png',
-                width: 32,
-                height: 32,
-              ),
-            ),
+            const HammerIcon(size: 28),
             const SizedBox(width: 10),
             RichText(
               text: const TextSpan(

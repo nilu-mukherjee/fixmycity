@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/service_locator.dart';
+import '../widgets/hammer_icon.dart';
 import 'home_screen.dart';
 
 class SignInScreen extends StatefulWidget {
@@ -41,14 +42,7 @@ class _SignInScreenState extends State<SignInScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Image.asset(
-                  'assets/images/fixmycity-logo.png',
-                  width: 96,
-                  height: 96,
-                ),
-              ),
+              const HammerIcon(size: 72),
               const SizedBox(height: 16),
               RichText(
                 text: const TextSpan(

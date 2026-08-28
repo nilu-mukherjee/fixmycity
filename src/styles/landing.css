@@ -122,6 +122,11 @@
   text-decoration: none;
   color: var(--ink);
 }
+.landing .brand .hammer {
+  color: var(--accent);
+  flex-shrink: 0;
+  align-self: center;
+}
 .landing .brand .mark {
   font-family: 'Staatliches', sans-serif;
   font-size: 1.5rem;
