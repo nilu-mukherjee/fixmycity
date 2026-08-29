@@ -53,7 +53,7 @@ export function SiteFooter() {
           </div>
         </div>
         <div className="foot-bottom">
-          <span>FixMyCity AI — a hackathon build, Bengaluru civic pilot.</span>
+          <span>FixMyCity AI — a hackathon build, one city at a time.</span>
           <span className="mono">
             Backend: <span style={{ color: 'var(--route)' }}>●</span>{' '}
             operational

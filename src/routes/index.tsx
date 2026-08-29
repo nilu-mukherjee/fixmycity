@@ -36,9 +36,9 @@ function LandingPage() {
             <div>
               <p className="eyebrow">CIVIC COMPLAINT → VERIFIED WORK ORDER</p>
               <h1 className="display">
-                Bengaluru&apos;s potholes
+                Every pothole
                 <br />
-                now get a <em>case number.</em>
+                now gets a <em>case number.</em>
               </h1>
               <p className="lede">
                 Snap a photo, drop a pin. Our agent reads the damage, scores how
@@ -71,7 +71,7 @@ function LandingPage() {
                   </div>
                   <h3>Unsafe Footpath</h3>
                   <div className="addr">
-                    100ft Road, Indiranagar · reported 6 min ago
+                    Main St, Downtown · reported 6 min ago
                   </div>
                 </div>
               </div>
@@ -94,7 +94,7 @@ function LandingPage() {
               </div>
               <div className="perforation" />
               <div className="ticket-foot">
-                <span>ROUTED → BBMP Roads Dept.</span>
+                <span>ROUTED → Public Works Dept.</span>
                 <span>
                   <b>●</b> Assigned
                 </span>
