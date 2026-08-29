@@ -17,6 +17,11 @@ jobs:
     # workflow exists.
     runs-on: ubuntu-latest
 
+    # Needed to publish/update the `latest-apk` release below — the default
+    # GITHUB_TOKEN is otherwise read-only on a private repo.
+    permissions:
+      contents: write
+
     steps:
       - uses: actions/checkout@v4
 
@@ -109,3 +114,22 @@ jobs:
           name: fixmycity-release-apks
           path: android_app/build/app/outputs/flutter-apk/*.apk
           retention-days: 30
+
+      # A run artifact (above) requires GitHub auth just to reach the
+      # download button and lands as a zipped folder of every ABI split —
+      # not a one-click "Download Android app" link. A release asset is a
+      # stable URL that serves the raw .apk directly with a
+      # Content-Disposition: attachment header, so the site's download
+      # button (src/components/site-nav.tsx) can link straight to it. The
+      # `latest-apk` tag is reused/overwritten (`--clobber`) on every build
+      # so the link never changes.
+      - name: Publish latest-apk release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view latest-apk --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 \
+            || gh release create latest-apk --repo "$GITHUB_REPOSITORY" \
+                 --title "FixMyCity Android (latest build)" \
+                 --notes "Automatically rebuilt from the latest main branch commit. Not a versioned release — this tag is overwritten on every build."
+          gh release upload latest-apk --repo "$GITHUB_REPOSITORY" --clobber \
+            android_app/build/app/outputs/flutter-apk/*.apk

@@ -1,7 +1,14 @@
 import { Link } from '@tanstack/react-router'
 
+// A GitHub Release asset (not the Actions run page) — a stable URL that
+// serves the .apk directly with Content-Disposition: attachment, so
+// clicking this actually force-downloads instead of landing on a workflow
+// list page. `latest-apk` is a rolling tag the build workflow overwrites on
+// every run (.github/workflows/flutter-build.yml) — arm64-v8a covers the
+// overwhelming majority of real Android phones (2017+); armeabi-v7a/x86_64
+// splits exist in the same release for legacy/emulator use if ever needed.
 const APK_URL =
-  'https://github.com/nilu-mukherjee/fixmycity/actions/workflows/flutter-build.yml'
+  'https://github.com/nilu-mukherjee/fixmycity/releases/download/latest-apk/app-arm64-v8a-release.apk'
 
 /** Header used identically on every page — home, architecture, privacy, terms. */
 export function SiteNav() {
@@ -39,7 +46,7 @@ export function SiteNav() {
             </svg>
             Fix<span>My</span>City
           </span>
-          <span className="tag">BETA · BLR</span>
+          <span className="tag">BETA</span>
         </Link>
         <nav className="navlinks">
           <a href="/#how" className="navlink">
