@@ -121,6 +121,13 @@ model Ticket {
   category       IssueCategory
   severity       Severity
   description    String
+  // Short, specific, citizen-facing phrase for what the photo actually
+  // shows (e.g. "Exposed Electrical Wiring") — distinct from `category`,
+  // which stays a fixed enum so the DB, duplicate-detection, and
+  // department routing all keep keying off it unchanged. Nullable so
+  // tickets created before this field existed don't need a backfill; the
+  // UI falls back to a generic per-category label when absent.
+  issueLabel     String?
   urgencyNote    String
   department     String
   latitude       Float
@@ -167,6 +174,7 @@ model PresubmitDraft {
   category    IssueCategory?
   severity    Severity?
   description String?
+  issueLabel  String?
   department  String?
 
   clearImagePoints    Int?

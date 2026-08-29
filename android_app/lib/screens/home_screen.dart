@@ -228,7 +228,7 @@ class _TicketTile extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      ticket.category.label,
+                      ticket.displayLabel,
                       style: theme.textTheme.titleMedium,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,

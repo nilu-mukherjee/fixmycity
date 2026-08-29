@@ -60,6 +60,7 @@ async function handle({ request }: { request: Request }) {
     } else {
       await markDraftReady(draftId, {
         category: result.category,
+        issueLabel: result.issueLabel,
         severity: result.severity,
         description: result.description,
         department: result.department,

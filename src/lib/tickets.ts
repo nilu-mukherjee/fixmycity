@@ -47,6 +47,7 @@ export async function createTicket(input: {
   citizenId: string | null
   photoGcsObjectName: string
   category: IssueCategory
+  issueLabel?: string
   severity: Severity
   description: string
   urgencyNote: string

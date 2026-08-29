@@ -34,6 +34,7 @@ export async function markDraftReady(
   id: string,
   result: {
     category: IssueCategory
+    issueLabel: string
     severity: Severity
     description: string
     department: string

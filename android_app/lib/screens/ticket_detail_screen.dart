@@ -52,7 +52,7 @@ class TicketDetailScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    ticket.category.label,
+                    ticket.displayLabel,
                     style: Theme.of(context).textTheme.titleLarge,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

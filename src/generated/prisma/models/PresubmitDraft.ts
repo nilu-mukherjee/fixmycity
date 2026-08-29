@@ -59,6 +59,7 @@ export type PresubmitDraftMinAggregateOutputType = {
   category: $Enums.IssueCategory | null
   severity: $Enums.Severity | null
   description: string | null
+  issueLabel: string | null
   department: string | null
   clearImagePoints: number | null
   exactLocationPoints: number | null
@@ -81,6 +82,7 @@ export type PresubmitDraftMaxAggregateOutputType = {
   category: $Enums.IssueCategory | null
   severity: $Enums.Severity | null
   description: string | null
+  issueLabel: string | null
   department: string | null
   clearImagePoints: number | null
   exactLocationPoints: number | null
@@ -103,6 +105,7 @@ export type PresubmitDraftCountAggregateOutputType = {
   category: number
   severity: number
   description: number
+  issueLabel: number
   department: number
   clearImagePoints: number
   exactLocationPoints: number
@@ -149,6 +152,7 @@ export type PresubmitDraftMinAggregateInputType = {
   category?: true
   severity?: true
   description?: true
+  issueLabel?: true
   department?: true
   clearImagePoints?: true
   exactLocationPoints?: true
@@ -171,6 +175,7 @@ export type PresubmitDraftMaxAggregateInputType = {
   category?: true
   severity?: true
   description?: true
+  issueLabel?: true
   department?: true
   clearImagePoints?: true
   exactLocationPoints?: true
@@ -193,6 +198,7 @@ export type PresubmitDraftCountAggregateInputType = {
   category?: true
   severity?: true
   description?: true
+  issueLabel?: true
   department?: true
   clearImagePoints?: true
   exactLocationPoints?: true
@@ -302,6 +308,7 @@ export type PresubmitDraftGroupByOutputType = {
   category: $Enums.IssueCategory | null
   severity: $Enums.Severity | null
   description: string | null
+  issueLabel: string | null
   department: string | null
   clearImagePoints: number | null
   exactLocationPoints: number | null
@@ -347,6 +354,7 @@ export type PresubmitDraftWhereInput = {
   category?: Prisma.EnumIssueCategoryNullableFilter<"PresubmitDraft"> | $Enums.IssueCategory | null
   severity?: Prisma.EnumSeverityNullableFilter<"PresubmitDraft"> | $Enums.Severity | null
   description?: Prisma.StringNullableFilter<"PresubmitDraft"> | string | null
+  issueLabel?: Prisma.StringNullableFilter<"PresubmitDraft"> | string | null
   department?: Prisma.StringNullableFilter<"PresubmitDraft"> | string | null
   clearImagePoints?: Prisma.IntNullableFilter<"PresubmitDraft"> | number | null
   exactLocationPoints?: Prisma.IntNullableFilter<"PresubmitDraft"> | number | null
@@ -370,6 +378,7 @@ export type PresubmitDraftOrderByWithRelationInput = {
   category?: Prisma.SortOrderInput | Prisma.SortOrder
   severity?: Prisma.SortOrderInput | Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
+  issueLabel?: Prisma.SortOrderInput | Prisma.SortOrder
   department?: Prisma.SortOrderInput | Prisma.SortOrder
   clearImagePoints?: Prisma.SortOrderInput | Prisma.SortOrder
   exactLocationPoints?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -396,6 +405,7 @@ export type PresubmitDraftWhereUniqueInput = Prisma.AtLeast<{
   category?: Prisma.EnumIssueCategoryNullableFilter<"PresubmitDraft"> | $Enums.IssueCategory | null
   severity?: Prisma.EnumSeverityNullableFilter<"PresubmitDraft"> | $Enums.Severity | null
   description?: Prisma.StringNullableFilter<"PresubmitDraft"> | string | null
+  issueLabel?: Prisma.StringNullableFilter<"PresubmitDraft"> | string | null
   department?: Prisma.StringNullableFilter<"PresubmitDraft"> | string | null
   clearImagePoints?: Prisma.IntNullableFilter<"PresubmitDraft"> | number | null
   exactLocationPoints?: Prisma.IntNullableFilter<"PresubmitDraft"> | number | null
@@ -419,6 +429,7 @@ export type PresubmitDraftOrderByWithAggregationInput = {
   category?: Prisma.SortOrderInput | Prisma.SortOrder
   severity?: Prisma.SortOrderInput | Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
+  issueLabel?: Prisma.SortOrderInput | Prisma.SortOrder
   department?: Prisma.SortOrderInput | Prisma.SortOrder
   clearImagePoints?: Prisma.SortOrderInput | Prisma.SortOrder
   exactLocationPoints?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -449,6 +460,7 @@ export type PresubmitDraftScalarWhereWithAggregatesInput = {
   category?: Prisma.EnumIssueCategoryNullableWithAggregatesFilter<"PresubmitDraft"> | $Enums.IssueCategory | null
   severity?: Prisma.EnumSeverityNullableWithAggregatesFilter<"PresubmitDraft"> | $Enums.Severity | null
   description?: Prisma.StringNullableWithAggregatesFilter<"PresubmitDraft"> | string | null
+  issueLabel?: Prisma.StringNullableWithAggregatesFilter<"PresubmitDraft"> | string | null
   department?: Prisma.StringNullableWithAggregatesFilter<"PresubmitDraft"> | string | null
   clearImagePoints?: Prisma.IntNullableWithAggregatesFilter<"PresubmitDraft"> | number | null
   exactLocationPoints?: Prisma.IntNullableWithAggregatesFilter<"PresubmitDraft"> | number | null
@@ -470,6 +482,7 @@ export type PresubmitDraftCreateInput = {
   category?: $Enums.IssueCategory | null
   severity?: $Enums.Severity | null
   description?: string | null
+  issueLabel?: string | null
   department?: string | null
   clearImagePoints?: number | null
   exactLocationPoints?: number | null
@@ -493,6 +506,7 @@ export type PresubmitDraftUncheckedCreateInput = {
   category?: $Enums.IssueCategory | null
   severity?: $Enums.Severity | null
   description?: string | null
+  issueLabel?: string | null
   department?: string | null
   clearImagePoints?: number | null
   exactLocationPoints?: number | null
@@ -514,6 +528,7 @@ export type PresubmitDraftUpdateInput = {
   category?: Prisma.NullableEnumIssueCategoryFieldUpdateOperationsInput | $Enums.IssueCategory | null
   severity?: Prisma.NullableEnumSeverityFieldUpdateOperationsInput | $Enums.Severity | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  issueLabel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clearImagePoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   exactLocationPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -537,6 +552,7 @@ export type PresubmitDraftUncheckedUpdateInput = {
   category?: Prisma.NullableEnumIssueCategoryFieldUpdateOperationsInput | $Enums.IssueCategory | null
   severity?: Prisma.NullableEnumSeverityFieldUpdateOperationsInput | $Enums.Severity | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  issueLabel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clearImagePoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   exactLocationPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -559,6 +575,7 @@ export type PresubmitDraftCreateManyInput = {
   category?: $Enums.IssueCategory | null
   severity?: $Enums.Severity | null
   description?: string | null
+  issueLabel?: string | null
   department?: string | null
   clearImagePoints?: number | null
   exactLocationPoints?: number | null
@@ -580,6 +597,7 @@ export type PresubmitDraftUpdateManyMutationInput = {
   category?: Prisma.NullableEnumIssueCategoryFieldUpdateOperationsInput | $Enums.IssueCategory | null
   severity?: Prisma.NullableEnumSeverityFieldUpdateOperationsInput | $Enums.Severity | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  issueLabel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clearImagePoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   exactLocationPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -602,6 +620,7 @@ export type PresubmitDraftUncheckedUpdateManyInput = {
   category?: Prisma.NullableEnumIssueCategoryFieldUpdateOperationsInput | $Enums.IssueCategory | null
   severity?: Prisma.NullableEnumSeverityFieldUpdateOperationsInput | $Enums.Severity | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  issueLabel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clearImagePoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   exactLocationPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -634,6 +653,7 @@ export type PresubmitDraftCountOrderByAggregateInput = {
   category?: Prisma.SortOrder
   severity?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  issueLabel?: Prisma.SortOrder
   department?: Prisma.SortOrder
   clearImagePoints?: Prisma.SortOrder
   exactLocationPoints?: Prisma.SortOrder
@@ -667,6 +687,7 @@ export type PresubmitDraftMaxOrderByAggregateInput = {
   category?: Prisma.SortOrder
   severity?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  issueLabel?: Prisma.SortOrder
   department?: Prisma.SortOrder
   clearImagePoints?: Prisma.SortOrder
   exactLocationPoints?: Prisma.SortOrder
@@ -689,6 +710,7 @@ export type PresubmitDraftMinOrderByAggregateInput = {
   category?: Prisma.SortOrder
   severity?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  issueLabel?: Prisma.SortOrder
   department?: Prisma.SortOrder
   clearImagePoints?: Prisma.SortOrder
   exactLocationPoints?: Prisma.SortOrder
@@ -775,6 +797,7 @@ export type PresubmitDraftCreateWithoutCitizenInput = {
   category?: $Enums.IssueCategory | null
   severity?: $Enums.Severity | null
   description?: string | null
+  issueLabel?: string | null
   department?: string | null
   clearImagePoints?: number | null
   exactLocationPoints?: number | null
@@ -796,6 +819,7 @@ export type PresubmitDraftUncheckedCreateWithoutCitizenInput = {
   category?: $Enums.IssueCategory | null
   severity?: $Enums.Severity | null
   description?: string | null
+  issueLabel?: string | null
   department?: string | null
   clearImagePoints?: number | null
   exactLocationPoints?: number | null
@@ -847,6 +871,7 @@ export type PresubmitDraftScalarWhereInput = {
   category?: Prisma.EnumIssueCategoryNullableFilter<"PresubmitDraft"> | $Enums.IssueCategory | null
   severity?: Prisma.EnumSeverityNullableFilter<"PresubmitDraft"> | $Enums.Severity | null
   description?: Prisma.StringNullableFilter<"PresubmitDraft"> | string | null
+  issueLabel?: Prisma.StringNullableFilter<"PresubmitDraft"> | string | null
   department?: Prisma.StringNullableFilter<"PresubmitDraft"> | string | null
   clearImagePoints?: Prisma.IntNullableFilter<"PresubmitDraft"> | number | null
   exactLocationPoints?: Prisma.IntNullableFilter<"PresubmitDraft"> | number | null
@@ -868,6 +893,7 @@ export type PresubmitDraftCreateManyCitizenInput = {
   category?: $Enums.IssueCategory | null
   severity?: $Enums.Severity | null
   description?: string | null
+  issueLabel?: string | null
   department?: string | null
   clearImagePoints?: number | null
   exactLocationPoints?: number | null
@@ -889,6 +915,7 @@ export type PresubmitDraftUpdateWithoutCitizenInput = {
   category?: Prisma.NullableEnumIssueCategoryFieldUpdateOperationsInput | $Enums.IssueCategory | null
   severity?: Prisma.NullableEnumSeverityFieldUpdateOperationsInput | $Enums.Severity | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  issueLabel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clearImagePoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   exactLocationPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -910,6 +937,7 @@ export type PresubmitDraftUncheckedUpdateWithoutCitizenInput = {
   category?: Prisma.NullableEnumIssueCategoryFieldUpdateOperationsInput | $Enums.IssueCategory | null
   severity?: Prisma.NullableEnumSeverityFieldUpdateOperationsInput | $Enums.Severity | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  issueLabel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clearImagePoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   exactLocationPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -931,6 +959,7 @@ export type PresubmitDraftUncheckedUpdateManyWithoutCitizenInput = {
   category?: Prisma.NullableEnumIssueCategoryFieldUpdateOperationsInput | $Enums.IssueCategory | null
   severity?: Prisma.NullableEnumSeverityFieldUpdateOperationsInput | $Enums.Severity | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  issueLabel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clearImagePoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   exactLocationPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -955,6 +984,7 @@ export type PresubmitDraftSelect<ExtArgs extends runtime.Types.Extensions.Intern
   category?: boolean
   severity?: boolean
   description?: boolean
+  issueLabel?: boolean
   department?: boolean
   clearImagePoints?: boolean
   exactLocationPoints?: boolean
@@ -978,6 +1008,7 @@ export type PresubmitDraftSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   category?: boolean
   severity?: boolean
   description?: boolean
+  issueLabel?: boolean
   department?: boolean
   clearImagePoints?: boolean
   exactLocationPoints?: boolean
@@ -1001,6 +1032,7 @@ export type PresubmitDraftSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
   category?: boolean
   severity?: boolean
   description?: boolean
+  issueLabel?: boolean
   department?: boolean
   clearImagePoints?: boolean
   exactLocationPoints?: boolean
@@ -1024,6 +1056,7 @@ export type PresubmitDraftSelectScalar = {
   category?: boolean
   severity?: boolean
   description?: boolean
+  issueLabel?: boolean
   department?: boolean
   clearImagePoints?: boolean
   exactLocationPoints?: boolean
@@ -1035,7 +1068,7 @@ export type PresubmitDraftSelectScalar = {
   updatedAt?: boolean
 }
 
-export type PresubmitDraftOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "citizenId" | "latitude" | "longitude" | "accuracyMeters" | "urgencyNote" | "status" | "category" | "severity" | "description" | "department" | "clearImagePoints" | "exactLocationPoints" | "nearbyReportsPoints" | "recentReportPoints" | "nearbyDuplicateCount" | "errorMessage" | "createdAt" | "updatedAt", ExtArgs["result"]["presubmitDraft"]>
+export type PresubmitDraftOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "citizenId" | "latitude" | "longitude" | "accuracyMeters" | "urgencyNote" | "status" | "category" | "severity" | "description" | "issueLabel" | "department" | "clearImagePoints" | "exactLocationPoints" | "nearbyReportsPoints" | "recentReportPoints" | "nearbyDuplicateCount" | "errorMessage" | "createdAt" | "updatedAt", ExtArgs["result"]["presubmitDraft"]>
 export type PresubmitDraftInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   citizen?: boolean | Prisma.PresubmitDraft$citizenArgs<ExtArgs>
 }
@@ -1062,6 +1095,7 @@ export type $PresubmitDraftPayload<ExtArgs extends runtime.Types.Extensions.Inte
     category: $Enums.IssueCategory | null
     severity: $Enums.Severity | null
     description: string | null
+    issueLabel: string | null
     department: string | null
     clearImagePoints: number | null
     exactLocationPoints: number | null
@@ -1505,6 +1539,7 @@ export interface PresubmitDraftFieldRefs {
   readonly category: Prisma.FieldRef<"PresubmitDraft", 'IssueCategory'>
   readonly severity: Prisma.FieldRef<"PresubmitDraft", 'Severity'>
   readonly description: Prisma.FieldRef<"PresubmitDraft", 'String'>
+  readonly issueLabel: Prisma.FieldRef<"PresubmitDraft", 'String'>
   readonly department: Prisma.FieldRef<"PresubmitDraft", 'String'>
   readonly clearImagePoints: Prisma.FieldRef<"PresubmitDraft", 'Int'>
   readonly exactLocationPoints: Prisma.FieldRef<"PresubmitDraft", 'Int'>

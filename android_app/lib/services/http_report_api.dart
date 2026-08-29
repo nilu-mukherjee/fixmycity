@@ -86,6 +86,7 @@ class HttpReportApi implements ReportApi {
           category: IssueCategory.fromApi(draft['category'] as String),
           severity: Severity.fromApi(draft['severity'] as String),
           description: draft['description'] as String,
+          issueLabel: draft['issueLabel'] as String?,
           location: location,
           urgencyNote: urgencyNote,
           trustScore: TrustScoreBreakdown.fromJson(
@@ -117,6 +118,8 @@ class HttpReportApi implements ReportApi {
               'draftId': draftId,
               'photoGcsObjectName': 'reports/$draftId.jpg',
               'category': presubmit.category.apiValue,
+              if (presubmit.issueLabel != null)
+                'issueLabel': presubmit.issueLabel,
               'severity': presubmit.severity.apiValue,
               'description': presubmit.description,
               'urgencyNote': presubmit.urgencyNote,

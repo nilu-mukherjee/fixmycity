@@ -1,6 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  Building2,
+  Clock,
+  Crosshair,
+  Image as ImageIcon,
+  MapPin,
+  MessageSquareText,
+  ShieldCheck,
+  Users,
+} from 'lucide-react'
 
 import { Button } from '#/components/ui/button'
 import { getPublicUrl } from '#/gcs/url'
@@ -38,6 +48,16 @@ const CATEGORY_LABEL: Record<Category, string> = {
   water_leakage: 'Water Leakage',
   road_blockage: 'Road Blockage',
   unsafe_footpath: 'Unsafe Footpath',
+}
+
+/**
+ * Gemini's own short label for what the photo shows (e.g. "Exposed
+ * Electrical Wiring"), falling back to the generic per-category label for
+ * tickets created before `issueLabel` existed. `category` itself stays the
+ * fixed enum — this is display-only.
+ */
+function issueLabel(ticket: Pick<AdminTicket, 'category' | 'issueLabel'>) {
+  return ticket.issueLabel ?? CATEGORY_LABEL[ticket.category]
 }
 
 const SEVERITY_LABEL: Record<Severity, string> = {
@@ -111,6 +131,44 @@ function relativeTime(creationTime: number): string {
   const hours = Math.round(mins / 60)
   if (hours < 24) return `${hours}h ago`
   return `${Math.round(hours / 24)}d ago`
+}
+
+/** In-memory across the session — reopening the same ticket's panel shouldn't re-hit the geocoder. */
+const geocodeCache = new Map<string, string>()
+
+/** Reverse-geocodes a ticket's coordinates into a human-readable address via OSM Nominatim (no API key/billing needed). */
+function useAddress(lat: number, lng: number) {
+  const key = `${lat.toFixed(5)},${lng.toFixed(5)}`
+  const [address, setAddress] = useState<string | null>(
+    () => geocodeCache.get(key) ?? null,
+  )
+  const [loading, setLoading] = useState(!geocodeCache.has(key))
+
+  useEffect(() => {
+    const cached = geocodeCache.get(key)
+    if (cached) {
+      setAddress(cached)
+      setLoading(false)
+      return
+    }
+    setAddress(null)
+    setLoading(true)
+    const controller = new AbortController()
+    fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18`,
+      { signal: controller.signal, headers: { Accept: 'application/json' } },
+    )
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { display_name?: string } | null) => {
+        if (data?.display_name) geocodeCache.set(key, data.display_name)
+        setAddress(data?.display_name ?? null)
+      })
+      .catch(() => setAddress(null))
+      .finally(() => setLoading(false))
+    return () => controller.abort()
+  }, [key, lat, lng])
+
+  return { address, loading }
 }
 
 interface MonthOverMonth {
@@ -901,7 +959,7 @@ function TicketRow({
           />
           <div className="min-w-0">
             <p className="font-medium text-gray-800 dark:text-white/90">
-              {CATEGORY_LABEL[ticket.category]}
+              {issueLabel(ticket)}
             </p>
             <p className="text-theme-xs max-w-[260px] truncate text-gray-500 dark:text-gray-400">
               {ticket.description}
@@ -936,16 +994,19 @@ function TrustRow({
   label,
   points,
   max,
+  icon,
 }: {
   label: string
   points: number
   max: number
+  icon?: React.ReactNode
 }) {
   const pct = (points / max) * 100
   return (
     <div className="py-1.5">
       <div className="mb-1 flex items-center justify-between">
-        <span className="text-theme-sm text-gray-600 dark:text-gray-300">
+        <span className="text-theme-sm flex items-center gap-1.5 text-gray-600 dark:text-gray-300">
+          {icon}
           {label}
         </span>
         <span className="text-theme-sm font-mono text-gray-500 dark:text-gray-400">
@@ -975,6 +1036,12 @@ function DetailPanel({
   const [pending, setPending] = useState(false)
   const next = nextStatus(ticket.status)
   const total = trustTotal(ticket.trustScore)
+  const { address, loading: addressLoading } = useAddress(
+    ticket.latitude,
+    ticket.longitude,
+  )
+  const coordsText = `${ticket.latitude.toFixed(5)}, ${ticket.longitude.toFixed(5)}`
+  const mapsHref = `https://www.google.com/maps?q=${ticket.latitude},${ticket.longitude}`
 
   async function advance() {
     if (!next) return
@@ -1004,7 +1071,7 @@ function DetailPanel({
               {formatTicketId(ticket.ticketNumber)}
             </p>
             <h2 className="text-2xl font-semibold text-gray-800 dark:text-white/90">
-              {CATEGORY_LABEL[ticket.category]}
+              {issueLabel(ticket)}
             </h2>
           </div>
           <Button
@@ -1034,7 +1101,7 @@ function DetailPanel({
 
           <img
             src={getPublicUrl(ticket.photoGcsObjectName)}
-            alt={`Reported ${CATEGORY_LABEL[ticket.category].toLowerCase()}`}
+            alt={`Reported ${issueLabel(ticket).toLowerCase()}`}
             className="aspect-4/3 w-full rounded-xl border border-gray-200 object-cover dark:border-gray-800"
           />
 
@@ -1044,7 +1111,11 @@ function DetailPanel({
 
           {ticket.urgencyNote && (
             <div>
-              <p className="text-theme-xs font-medium tracking-wide text-gray-400 uppercase dark:text-gray-500">
+              <p className="text-theme-xs flex items-center gap-1.5 font-medium tracking-wide text-gray-400 uppercase dark:text-gray-500">
+                <MessageSquareText
+                  size={13}
+                  className="text-amber-500 dark:text-amber-400"
+                />
                 Citizen note
               </p>
               <p className="text-theme-sm text-gray-600 dark:text-gray-400">
@@ -1053,9 +1124,13 @@ function DetailPanel({
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-col gap-4">
             <div>
-              <p className="text-theme-xs font-medium tracking-wide text-gray-400 uppercase dark:text-gray-500">
+              <p className="text-theme-xs flex items-center gap-1.5 font-medium tracking-wide text-gray-400 uppercase dark:text-gray-500">
+                <Building2
+                  size={13}
+                  className="text-indigo-500 dark:text-indigo-400"
+                />
                 Department
               </p>
               <p className="text-theme-sm text-gray-700 dark:text-gray-300">
@@ -1063,17 +1138,30 @@ function DetailPanel({
               </p>
             </div>
             <div>
-              <p className="text-theme-xs font-medium tracking-wide text-gray-400 uppercase dark:text-gray-500">
+              <p className="text-theme-xs flex items-center gap-1.5 font-medium tracking-wide text-gray-400 uppercase dark:text-gray-500">
+                <MapPin
+                  size={13}
+                  className="text-rose-500 dark:text-rose-400"
+                />
                 Location
               </p>
-              <p className="text-theme-xs font-mono">
+              <p className="text-theme-sm text-gray-700 dark:text-gray-300">
+                {addressLoading ? (
+                  <span className="text-gray-400 dark:text-gray-500">
+                    Locating address…
+                  </span>
+                ) : (
+                  (address ?? coordsText)
+                )}
+              </p>
+              <p className="text-theme-xs mt-1 font-mono">
                 <a
-                  href={`https://www.google.com/maps?q=${ticket.latitude},${ticket.longitude}`}
+                  href={mapsHref}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-brand-600 underline decoration-dotted underline-offset-2 hover:decoration-solid dark:text-brand-400"
                 >
-                  {ticket.latitude.toFixed(5)}, {ticket.longitude.toFixed(5)}
+                  {coordsText}
                 </a>
                 {ticket.accuracyMeters != null && (
                   <span className="text-gray-400 dark:text-gray-500">
@@ -1087,7 +1175,11 @@ function DetailPanel({
 
           <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-white/[0.02]">
             <div className="mb-2 flex items-center justify-between">
-              <p className="text-theme-xs font-medium tracking-wide text-gray-400 uppercase dark:text-gray-500">
+              <p className="text-theme-xs flex items-center gap-1.5 font-medium tracking-wide text-gray-400 uppercase dark:text-gray-500">
+                <ShieldCheck
+                  size={13}
+                  className="text-emerald-500 dark:text-emerald-400"
+                />
                 Trust score
               </p>
               <p className="text-theme-sm font-mono font-semibold text-gray-800 dark:text-white/90">
@@ -1098,21 +1190,45 @@ function DetailPanel({
               label="Clear image"
               points={ticket.trustScore.clearImagePoints}
               max={30}
+              icon={
+                <ImageIcon
+                  size={13}
+                  className="text-sky-500 dark:text-sky-400"
+                />
+              }
             />
             <TrustRow
               label="Exact location"
               points={ticket.trustScore.exactLocationPoints}
               max={30}
+              icon={
+                <Crosshair
+                  size={13}
+                  className="text-fuchsia-500 dark:text-fuchsia-400"
+                />
+              }
             />
             <TrustRow
               label="Nearby reports"
               points={ticket.trustScore.nearbyReportsPoints}
               max={25}
+              icon={
+                <Users
+                  size={13}
+                  className="text-violet-500 dark:text-violet-400"
+                />
+              }
             />
             <TrustRow
               label="Recent report"
               points={ticket.trustScore.recentReportPoints}
               max={15}
+              icon={
+                <Clock
+                  size={13}
+                  className="text-orange-500 dark:text-orange-400"
+                />
+              }
             />
           </div>
         </div>

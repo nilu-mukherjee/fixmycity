@@ -31,7 +31,7 @@ enum IssueCategory {
     IssueCategory.roadBlockage => 'Road Department',
     IssueCategory.unsafeFootpath => 'Road Department',
     IssueCategory.garbage => 'Waste Management',
-    IssueCategory.streetlight => 'Electricity / Streetlight Team',
+    IssueCategory.streetlight => 'Electricity Department',
     IssueCategory.drainage => 'Water Board',
     IssueCategory.waterLeakage => 'Water Board',
   };
@@ -190,6 +190,7 @@ class PresubmitResult {
     required this.urgencyNote,
     required this.trustScore,
     required this.nearbyDuplicateCount,
+    this.issueLabel,
     this.draftId,
   });
 
@@ -197,6 +198,13 @@ class PresubmitResult {
   IssueCategory category;
   Severity severity;
   String description;
+
+  /// Gemini's short, specific label for what the photo shows (e.g. "Exposed
+  /// Electrical Wiring") — distinct from [category], which stays the fixed
+  /// enum. Not editable on the presubmit screen (unlike category/severity/
+  /// description); carried through to [Ticket.createTicket] as-is. Null
+  /// under [MockReportApi], which doesn't simulate it.
+  final String? issueLabel;
   final GeoPoint location;
   final String urgencyNote;
   final TrustScoreBreakdown trustScore;
@@ -227,6 +235,7 @@ class Ticket {
     required this.trustScore,
     required this.status,
     required this.createdAt,
+    this.issueLabel,
   });
 
   final String id;
@@ -247,6 +256,15 @@ class Ticket {
   final TrustScoreBreakdown trustScore;
   TicketStatus status;
   final DateTime createdAt;
+
+  /// Gemini's short, specific label for what the photo shows (e.g. "Exposed
+  /// Electrical Wiring") — falls back to [IssueCategory.label] via
+  /// [displayLabel] for tickets created before this field existed.
+  final String? issueLabel;
+
+  /// What to actually show in the UI in place of [category]'s generic
+  /// label — see [issueLabel].
+  String get displayLabel => issueLabel ?? category.label;
 
   String get department => category.department;
 
@@ -291,6 +309,7 @@ class Ticket {
       createdAt: DateTime.fromMillisecondsSinceEpoch(
         (json['_creationTime'] as num).toInt(),
       ),
+      issueLabel: json['issueLabel'] as String?,
     );
   }
 }

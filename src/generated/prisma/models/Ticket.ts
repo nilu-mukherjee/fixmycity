@@ -56,6 +56,7 @@ export type TicketMinAggregateOutputType = {
   category: $Enums.IssueCategory | null
   severity: $Enums.Severity | null
   description: string | null
+  issueLabel: string | null
   urgencyNote: string | null
   department: string | null
   latitude: number | null
@@ -81,6 +82,7 @@ export type TicketMaxAggregateOutputType = {
   category: $Enums.IssueCategory | null
   severity: $Enums.Severity | null
   description: string | null
+  issueLabel: string | null
   urgencyNote: string | null
   department: string | null
   latitude: number | null
@@ -106,6 +108,7 @@ export type TicketCountAggregateOutputType = {
   category: number
   severity: number
   description: number
+  issueLabel: number
   urgencyNote: number
   department: number
   latitude: number
@@ -155,6 +158,7 @@ export type TicketMinAggregateInputType = {
   category?: true
   severity?: true
   description?: true
+  issueLabel?: true
   urgencyNote?: true
   department?: true
   latitude?: true
@@ -180,6 +184,7 @@ export type TicketMaxAggregateInputType = {
   category?: true
   severity?: true
   description?: true
+  issueLabel?: true
   urgencyNote?: true
   department?: true
   latitude?: true
@@ -205,6 +210,7 @@ export type TicketCountAggregateInputType = {
   category?: true
   severity?: true
   description?: true
+  issueLabel?: true
   urgencyNote?: true
   department?: true
   latitude?: true
@@ -317,6 +323,7 @@ export type TicketGroupByOutputType = {
   category: $Enums.IssueCategory
   severity: $Enums.Severity
   description: string
+  issueLabel: string | null
   urgencyNote: string
   department: string
   latitude: number
@@ -365,6 +372,7 @@ export type TicketWhereInput = {
   category?: Prisma.EnumIssueCategoryFilter<"Ticket"> | $Enums.IssueCategory
   severity?: Prisma.EnumSeverityFilter<"Ticket"> | $Enums.Severity
   description?: Prisma.StringFilter<"Ticket"> | string
+  issueLabel?: Prisma.StringNullableFilter<"Ticket"> | string | null
   urgencyNote?: Prisma.StringFilter<"Ticket"> | string
   department?: Prisma.StringFilter<"Ticket"> | string
   latitude?: Prisma.FloatFilter<"Ticket"> | number
@@ -391,6 +399,7 @@ export type TicketOrderByWithRelationInput = {
   category?: Prisma.SortOrder
   severity?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  issueLabel?: Prisma.SortOrderInput | Prisma.SortOrder
   urgencyNote?: Prisma.SortOrder
   department?: Prisma.SortOrder
   latitude?: Prisma.SortOrder
@@ -420,6 +429,7 @@ export type TicketWhereUniqueInput = Prisma.AtLeast<{
   category?: Prisma.EnumIssueCategoryFilter<"Ticket"> | $Enums.IssueCategory
   severity?: Prisma.EnumSeverityFilter<"Ticket"> | $Enums.Severity
   description?: Prisma.StringFilter<"Ticket"> | string
+  issueLabel?: Prisma.StringNullableFilter<"Ticket"> | string | null
   urgencyNote?: Prisma.StringFilter<"Ticket"> | string
   department?: Prisma.StringFilter<"Ticket"> | string
   latitude?: Prisma.FloatFilter<"Ticket"> | number
@@ -446,6 +456,7 @@ export type TicketOrderByWithAggregationInput = {
   category?: Prisma.SortOrder
   severity?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  issueLabel?: Prisma.SortOrderInput | Prisma.SortOrder
   urgencyNote?: Prisma.SortOrder
   department?: Prisma.SortOrder
   latitude?: Prisma.SortOrder
@@ -479,6 +490,7 @@ export type TicketScalarWhereWithAggregatesInput = {
   category?: Prisma.EnumIssueCategoryWithAggregatesFilter<"Ticket"> | $Enums.IssueCategory
   severity?: Prisma.EnumSeverityWithAggregatesFilter<"Ticket"> | $Enums.Severity
   description?: Prisma.StringWithAggregatesFilter<"Ticket"> | string
+  issueLabel?: Prisma.StringNullableWithAggregatesFilter<"Ticket"> | string | null
   urgencyNote?: Prisma.StringWithAggregatesFilter<"Ticket"> | string
   department?: Prisma.StringWithAggregatesFilter<"Ticket"> | string
   latitude?: Prisma.FloatWithAggregatesFilter<"Ticket"> | number
@@ -503,6 +515,7 @@ export type TicketCreateInput = {
   category: $Enums.IssueCategory
   severity: $Enums.Severity
   description: string
+  issueLabel?: string | null
   urgencyNote: string
   department: string
   latitude: number
@@ -529,6 +542,7 @@ export type TicketUncheckedCreateInput = {
   category: $Enums.IssueCategory
   severity: $Enums.Severity
   description: string
+  issueLabel?: string | null
   urgencyNote: string
   department: string
   latitude: number
@@ -552,6 +566,7 @@ export type TicketUpdateInput = {
   category?: Prisma.EnumIssueCategoryFieldUpdateOperationsInput | $Enums.IssueCategory
   severity?: Prisma.EnumSeverityFieldUpdateOperationsInput | $Enums.Severity
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  issueLabel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   urgencyNote?: Prisma.StringFieldUpdateOperationsInput | string
   department?: Prisma.StringFieldUpdateOperationsInput | string
   latitude?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -578,6 +593,7 @@ export type TicketUncheckedUpdateInput = {
   category?: Prisma.EnumIssueCategoryFieldUpdateOperationsInput | $Enums.IssueCategory
   severity?: Prisma.EnumSeverityFieldUpdateOperationsInput | $Enums.Severity
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  issueLabel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   urgencyNote?: Prisma.StringFieldUpdateOperationsInput | string
   department?: Prisma.StringFieldUpdateOperationsInput | string
   latitude?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -603,6 +619,7 @@ export type TicketCreateManyInput = {
   category: $Enums.IssueCategory
   severity: $Enums.Severity
   description: string
+  issueLabel?: string | null
   urgencyNote: string
   department: string
   latitude: number
@@ -626,6 +643,7 @@ export type TicketUpdateManyMutationInput = {
   category?: Prisma.EnumIssueCategoryFieldUpdateOperationsInput | $Enums.IssueCategory
   severity?: Prisma.EnumSeverityFieldUpdateOperationsInput | $Enums.Severity
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  issueLabel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   urgencyNote?: Prisma.StringFieldUpdateOperationsInput | string
   department?: Prisma.StringFieldUpdateOperationsInput | string
   latitude?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -651,6 +669,7 @@ export type TicketUncheckedUpdateManyInput = {
   category?: Prisma.EnumIssueCategoryFieldUpdateOperationsInput | $Enums.IssueCategory
   severity?: Prisma.EnumSeverityFieldUpdateOperationsInput | $Enums.Severity
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  issueLabel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   urgencyNote?: Prisma.StringFieldUpdateOperationsInput | string
   department?: Prisma.StringFieldUpdateOperationsInput | string
   latitude?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -686,6 +705,7 @@ export type TicketCountOrderByAggregateInput = {
   category?: Prisma.SortOrder
   severity?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  issueLabel?: Prisma.SortOrder
   urgencyNote?: Prisma.SortOrder
   department?: Prisma.SortOrder
   latitude?: Prisma.SortOrder
@@ -722,6 +742,7 @@ export type TicketMaxOrderByAggregateInput = {
   category?: Prisma.SortOrder
   severity?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  issueLabel?: Prisma.SortOrder
   urgencyNote?: Prisma.SortOrder
   department?: Prisma.SortOrder
   latitude?: Prisma.SortOrder
@@ -747,6 +768,7 @@ export type TicketMinOrderByAggregateInput = {
   category?: Prisma.SortOrder
   severity?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  issueLabel?: Prisma.SortOrder
   urgencyNote?: Prisma.SortOrder
   department?: Prisma.SortOrder
   latitude?: Prisma.SortOrder
@@ -868,6 +890,7 @@ export type TicketCreateWithoutCitizenInput = {
   category: $Enums.IssueCategory
   severity: $Enums.Severity
   description: string
+  issueLabel?: string | null
   urgencyNote: string
   department: string
   latitude: number
@@ -892,6 +915,7 @@ export type TicketUncheckedCreateWithoutCitizenInput = {
   category: $Enums.IssueCategory
   severity: $Enums.Severity
   description: string
+  issueLabel?: string | null
   urgencyNote: string
   department: string
   latitude: number
@@ -946,6 +970,7 @@ export type TicketScalarWhereInput = {
   category?: Prisma.EnumIssueCategoryFilter<"Ticket"> | $Enums.IssueCategory
   severity?: Prisma.EnumSeverityFilter<"Ticket"> | $Enums.Severity
   description?: Prisma.StringFilter<"Ticket"> | string
+  issueLabel?: Prisma.StringNullableFilter<"Ticket"> | string | null
   urgencyNote?: Prisma.StringFilter<"Ticket"> | string
   department?: Prisma.StringFilter<"Ticket"> | string
   latitude?: Prisma.FloatFilter<"Ticket"> | number
@@ -970,6 +995,7 @@ export type TicketCreateManyCitizenInput = {
   category: $Enums.IssueCategory
   severity: $Enums.Severity
   description: string
+  issueLabel?: string | null
   urgencyNote: string
   department: string
   latitude: number
@@ -993,6 +1019,7 @@ export type TicketUpdateWithoutCitizenInput = {
   category?: Prisma.EnumIssueCategoryFieldUpdateOperationsInput | $Enums.IssueCategory
   severity?: Prisma.EnumSeverityFieldUpdateOperationsInput | $Enums.Severity
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  issueLabel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   urgencyNote?: Prisma.StringFieldUpdateOperationsInput | string
   department?: Prisma.StringFieldUpdateOperationsInput | string
   latitude?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -1017,6 +1044,7 @@ export type TicketUncheckedUpdateWithoutCitizenInput = {
   category?: Prisma.EnumIssueCategoryFieldUpdateOperationsInput | $Enums.IssueCategory
   severity?: Prisma.EnumSeverityFieldUpdateOperationsInput | $Enums.Severity
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  issueLabel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   urgencyNote?: Prisma.StringFieldUpdateOperationsInput | string
   department?: Prisma.StringFieldUpdateOperationsInput | string
   latitude?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -1041,6 +1069,7 @@ export type TicketUncheckedUpdateManyWithoutCitizenInput = {
   category?: Prisma.EnumIssueCategoryFieldUpdateOperationsInput | $Enums.IssueCategory
   severity?: Prisma.EnumSeverityFieldUpdateOperationsInput | $Enums.Severity
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  issueLabel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   urgencyNote?: Prisma.StringFieldUpdateOperationsInput | string
   department?: Prisma.StringFieldUpdateOperationsInput | string
   latitude?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -1068,6 +1097,7 @@ export type TicketSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   category?: boolean
   severity?: boolean
   description?: boolean
+  issueLabel?: boolean
   urgencyNote?: boolean
   department?: boolean
   latitude?: boolean
@@ -1094,6 +1124,7 @@ export type TicketSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   category?: boolean
   severity?: boolean
   description?: boolean
+  issueLabel?: boolean
   urgencyNote?: boolean
   department?: boolean
   latitude?: boolean
@@ -1120,6 +1151,7 @@ export type TicketSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   category?: boolean
   severity?: boolean
   description?: boolean
+  issueLabel?: boolean
   urgencyNote?: boolean
   department?: boolean
   latitude?: boolean
@@ -1146,6 +1178,7 @@ export type TicketSelectScalar = {
   category?: boolean
   severity?: boolean
   description?: boolean
+  issueLabel?: boolean
   urgencyNote?: boolean
   department?: boolean
   latitude?: boolean
@@ -1163,7 +1196,7 @@ export type TicketSelectScalar = {
   updatedAt?: boolean
 }
 
-export type TicketOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "ticketNumber" | "citizenId" | "photoGcsObjectName" | "category" | "severity" | "description" | "urgencyNote" | "department" | "latitude" | "longitude" | "accuracyMeters" | "aiCategory" | "aiSeverity" | "aiDescription" | "clearImagePoints" | "exactLocationPoints" | "nearbyReportsPoints" | "recentReportPoints" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["ticket"]>
+export type TicketOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "ticketNumber" | "citizenId" | "photoGcsObjectName" | "category" | "severity" | "description" | "issueLabel" | "urgencyNote" | "department" | "latitude" | "longitude" | "accuracyMeters" | "aiCategory" | "aiSeverity" | "aiDescription" | "clearImagePoints" | "exactLocationPoints" | "nearbyReportsPoints" | "recentReportPoints" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["ticket"]>
 export type TicketInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   citizen?: boolean | Prisma.Ticket$citizenArgs<ExtArgs>
 }
@@ -1187,6 +1220,7 @@ export type $TicketPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     category: $Enums.IssueCategory
     severity: $Enums.Severity
     description: string
+    issueLabel: string | null
     urgencyNote: string
     department: string
     latitude: number
@@ -1633,6 +1667,7 @@ export interface TicketFieldRefs {
   readonly category: Prisma.FieldRef<"Ticket", 'IssueCategory'>
   readonly severity: Prisma.FieldRef<"Ticket", 'Severity'>
   readonly description: Prisma.FieldRef<"Ticket", 'String'>
+  readonly issueLabel: Prisma.FieldRef<"Ticket", 'String'>
   readonly urgencyNote: Prisma.FieldRef<"Ticket", 'String'>
   readonly department: Prisma.FieldRef<"Ticket", 'String'>
   readonly latitude: Prisma.FieldRef<"Ticket", 'Float'>
