@@ -4,21 +4,22 @@
    already loaded globally in src/styles.css. */
 
 .landing {
-  --ground: #eaece9;
-  --surface: #ffffff;
-  --surface-2: #f2f3ef;
-  --ink: #17181a;
-  --ink-muted: #5b5e58;
-  --line: #c9ccc4;
-  --accent: #e2571a;
+  --ground: #131414;
+  --surface: #1c1e1d;
+  --surface-2: #202220;
+  --ink: #ecede9;
+  --ink-muted: #9a9d95;
+  --line: #34362f;
+  --accent: #f2712f;
   --accent-ink: #17181a;
-  --route: #2149d6;
-  --route-soft: #e7ecfc;
-  --signal: #2f8f5b;
-  --ai: #6c4fd9;
-  --ai-soft: #ece7fb;
-  --shadow:
-    0 1px 0 rgba(23, 24, 26, 0.06), 0 12px 24px -16px rgba(23, 24, 26, 0.25);
+  --route: #6c8cff;
+  --route-soft: #212a47;
+  --signal: #49b981;
+  --ai: #b79eff;
+  --ai-soft: #2a2340;
+  --shadow: 0 1px 0 rgba(0, 0, 0, 0.4), 0 20px 40px -20px rgba(0, 0, 0, 0.6);
+
+  color-scheme: dark;
 
   background: var(--ground);
   color: var(--ink);
@@ -26,25 +27,6 @@
   font-size: 16px;
   line-height: 1.6;
   min-height: 100vh;
-}
-
-@media (prefers-color-scheme: dark) {
-  .landing {
-    --ground: #131414;
-    --surface: #1c1e1d;
-    --surface-2: #202220;
-    --ink: #ecede9;
-    --ink-muted: #9a9d95;
-    --line: #34362f;
-    --accent: #f2712f;
-    --accent-ink: #17181a;
-    --route: #6c8cff;
-    --route-soft: #212a47;
-    --signal: #49b981;
-    --ai: #b79eff;
-    --ai-soft: #2a2340;
-    --shadow: 0 1px 0 rgba(0, 0, 0, 0.4), 0 20px 40px -20px rgba(0, 0, 0, 0.6);
-  }
 }
 
 .landing * {
@@ -778,9 +760,11 @@
   gap: 24px;
 }
 .landing .plaque {
-  background: var(--ink);
-  color: var(--ground);
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
   border-radius: 10px;
+  box-shadow: var(--shadow);
   padding: 36px 36px;
   text-align: center;
   display: flex;
@@ -788,18 +772,16 @@
   align-items: center;
 }
 .landing .plaque .eyebrow {
-  color: var(--ground);
-  opacity: 0.55;
+  color: var(--ink-muted);
 }
 .landing .plaque h3 {
   font-family: 'Staatliches';
   font-size: 1.5rem;
   margin: 10px 0 8px;
-  color: var(--ground);
+  color: var(--ink);
 }
 .landing .plaque p {
-  color: var(--ground);
-  opacity: 0.7;
+  color: var(--ink-muted);
   font-size: 0.9rem;
   margin: 0 0 22px;
 }
@@ -1053,7 +1035,7 @@
 }
 .landing .decisions-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(205px, 1fr));
   gap: 1px;
   background: var(--line);
   border: 1px solid var(--line);

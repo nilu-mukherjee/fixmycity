@@ -1,9 +1,64 @@
+import { useEffect, useRef } from 'react'
+
 import { createFileRoute } from '@tanstack/react-router'
+import gsap from 'gsap'
 
 import { SiteFooter } from '#/components/site-footer'
 import { SiteNav } from '#/components/site-nav'
 
 import '#/styles/landing.css'
+
+/**
+ * Flowing dashes on the diagram's connectors — GSAP tweens each edge's
+ * stroke-dashoffset toward a negative multiple of its own dash+gap length,
+ * so every repeat wraps exactly where it started: a seamless, endless flow
+ * toward the arrowhead. Respects prefers-reduced-motion.
+ */
+function useDiagramFlow(svgRef: React.RefObject<SVGSVGElement | null>) {
+  useEffect(() => {
+    const svg = svgRef.current
+    if (!svg) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+    function flow(
+      selector: string,
+      dash: string,
+      distance: number,
+      duration: number,
+    ) {
+      const els = svg!.querySelectorAll(selector)
+      if (!els.length) return null
+      gsap.set(els, {
+        attr: { 'stroke-dasharray': dash, 'stroke-dashoffset': 0 },
+      })
+      return gsap.to(els, {
+        attr: { 'stroke-dashoffset': -distance },
+        duration,
+        ease: 'none',
+        repeat: -1,
+      })
+    }
+
+    const tweens = [
+      flow(
+        '#arch-edge-1,#arch-edge-2,#arch-edge-3,#arch-edge-4,#arch-edge-5,#arch-edge-tool,#arch-edge-mark-ready,#arch-edge-6,#arch-edge-create-ticket,#arch-edge-corrections',
+        '7 6',
+        13,
+        0.65,
+      ),
+      flow(
+        '#arch-edge-poll,#arch-edge-deploy-a,#arch-edge-deploy-b,#arch-edge-deploy-c',
+        '5 5',
+        10,
+        1.6,
+      ),
+    ]
+
+    return () => {
+      for (const tween of tweens) tween?.kill()
+    }
+  }, [svgRef])
+}
 
 export const Route = createFileRoute('/architecture')({
   head: () => ({
@@ -24,6 +79,9 @@ export const Route = createFileRoute('/architecture')({
 })
 
 function ArchitecturePage() {
+  const svgRef = useRef<SVGSVGElement>(null)
+  useDiagramFlow(svgRef)
+
   return (
     <div className="landing">
       <SiteNav />
@@ -46,9 +104,10 @@ function ArchitecturePage() {
             <figure className="arch-diagram">
               <div className="arch-diagram-scroll">
                 <svg
+                  ref={svgRef}
                   viewBox="0 0 1100 900"
                   role="img"
-                  aria-label="Architecture diagram: a citizen's Flutter app creates a draft on Cloud Run and uploads a photo to Cloud Storage; the storage event fires through Eventarc into a private Cloud Run service, which runs a Genkit flow calling Gemini for classification, optionally querying Cloud SQL for nearby duplicate reports, then writes the result to Cloud SQL; the citizen reviews and approves to create a ticket; the admin dashboard polls the same API; GitHub pushes trigger Cloud Build to deploy both Cloud Run services."
+                  aria-label="Architecture diagram: a citizen's Flutter app creates a draft on Cloud Run and uploads a photo to Cloud Storage; the storage event fires through Eventarc into a private Cloud Run service, which runs a Genkit flow calling Gemini for classification, optionally querying Cloud SQL for nearby duplicate reports, then writes the result to Cloud SQL; the citizen reviews and approves to create a ticket; the admin dashboard polls the same API; GitHub pushes trigger Cloud Build to deploy both Cloud Run services. A dashed connector also runs from Cloud SQL back up into the Genkit flow, feeding the five most recent citizen corrections into the classification prompt as few-shot examples. Every connector's dashes flow toward its arrowhead, live, in the direction data actually moves."
                 >
                   <defs>
                     <marker
@@ -102,6 +161,7 @@ function ArchitecturePage() {
                   </text>
 
                   <line
+                    id="arch-edge-1"
                     x1="150"
                     y1="70"
                     x2="486"
@@ -120,6 +180,7 @@ function ArchitecturePage() {
                   </text>
 
                   <line
+                    id="arch-edge-6"
                     x1="486"
                     y1="98"
                     x2="150"
@@ -139,6 +200,7 @@ function ArchitecturePage() {
                   </text>
 
                   <line
+                    id="arch-edge-2"
                     x1="90"
                     y1="110"
                     x2="90"
@@ -152,6 +214,7 @@ function ArchitecturePage() {
                   </text>
 
                   <line
+                    id="arch-edge-3"
                     x1="120"
                     y1="260"
                     x2="486"
@@ -171,6 +234,7 @@ function ArchitecturePage() {
                   </g>
 
                   <line
+                    id="arch-edge-4"
                     x1="520"
                     y1="290"
                     x2="520"
@@ -184,6 +248,7 @@ function ArchitecturePage() {
                   </text>
 
                   <line
+                    id="arch-edge-5"
                     x1="550"
                     y1="440"
                     x2="756"
@@ -202,6 +267,7 @@ function ArchitecturePage() {
                   </text>
 
                   <polyline
+                    id="arch-edge-tool"
                     points="790,470 790,620 550,620"
                     fill="none"
                     stroke="var(--ai)"
@@ -222,7 +288,30 @@ function ArchitecturePage() {
                     category · model decides
                   </text>
 
+                  {/* Cloud SQL -> Genkit: the 5 most recent citizen
+                      corrections, fed back into the classification prompt
+                      as few-shot examples (the self-improvement loop). */}
                   <polyline
+                    id="arch-edge-corrections"
+                    points="490,605 460,605 460,445 486,445"
+                    fill="none"
+                    stroke="var(--ai)"
+                    strokeWidth="1.4"
+                    strokeDasharray="5 4"
+                    markerEnd="url(#arch-arrow-ai)"
+                  />
+                  <text
+                    x="447"
+                    y="525"
+                    textAnchor="middle"
+                    className="arch-edge-label-ai"
+                    transform="rotate(-90 447 525)"
+                  >
+                    last 5 corrections
+                  </text>
+
+                  <polyline
+                    id="arch-edge-mark-ready"
                     points="490,272 420,272 420,620 486,620"
                     fill="none"
                     stroke="var(--route)"
@@ -234,6 +323,7 @@ function ArchitecturePage() {
                   </text>
 
                   <polyline
+                    id="arch-edge-create-ticket"
                     points="490,90 300,90 300,650 486,650"
                     fill="none"
                     stroke="var(--route)"
@@ -245,6 +335,7 @@ function ArchitecturePage() {
                   </text>
 
                   <polyline
+                    id="arch-edge-poll"
                     points="900,90 660,90 660,55 584,55"
                     fill="none"
                     stroke="var(--ink-muted)"
@@ -257,30 +348,40 @@ function ArchitecturePage() {
                   </text>
 
                   <line
-                    x1="480"
+                    id="arch-edge-deploy-a"
+                    x1="870"
                     y1="825"
-                    x2="556"
+                    x2="896"
                     y2="825"
                     stroke="var(--ink-muted)"
                     strokeWidth="1.4"
                     markerEnd="url(#arch-arrow-muted)"
                   />
 
-                  <line
-                    x1="570"
-                    y1="800"
-                    x2="570"
-                    y2="746"
+                  <polyline
+                    id="arch-edge-deploy-b"
+                    points="925,800 925,745 650,745 650,55 550,55"
+                    fill="none"
                     stroke="var(--ink-muted)"
                     strokeWidth="1.3"
                     strokeDasharray="4 4"
                     markerEnd="url(#arch-arrow-muted)"
                   />
-                  <text x="580" y="770" className="arch-edge-label">
-                    deploys fixmycity +
+                  <text x="656" y="738" className="arch-edge-label">
+                    deploys fixmycity
                   </text>
-                  <text x="580" y="782" className="arch-edge-label">
-                    fixmycity-events
+
+                  <polyline
+                    id="arch-edge-deploy-c"
+                    points="935,800 935,760 850,760 850,260 550,260"
+                    fill="none"
+                    stroke="var(--ink-muted)"
+                    strokeWidth="1.3"
+                    strokeDasharray="4 4"
+                    markerEnd="url(#arch-arrow-muted)"
+                  />
+                  <text x="856" y="753" className="arch-edge-label">
+                    deploys fixmycity-events
                   </text>
 
                   <g transform="translate(60,40)">
@@ -462,7 +563,7 @@ function ArchitecturePage() {
                   <g transform="translate(490,400)">
                     <title>
                       Genkit Flow — analyzeReport: isCivicIssue, category,
-                      severity, description, imageIsClear
+                      issueLabel, severity, description, imageIsClear
                     </title>
                     <rect width="60" height="60" rx="14" fill="var(--ai)" />
                     <circle
@@ -585,7 +686,7 @@ function ArchitecturePage() {
                     </text>
                   </g>
 
-                  <g transform="translate(430,800)">
+                  <g transform="translate(820,800)">
                     <title>GitHub — push to main</title>
                     <rect
                       width="50"
@@ -641,7 +742,7 @@ function ArchitecturePage() {
                     </text>
                   </g>
 
-                  <g transform="translate(560,800)">
+                  <g transform="translate(900,800)">
                     <title>
                       Cloud Build — two triggers, auto build and deploy
                     </title>
@@ -815,7 +916,7 @@ function ArchitecturePage() {
           <div className="wrap">
             <div className="section-head">
               <p className="eyebrow">Why it&apos;s shaped this way</p>
-              <h2 className="display">Four decisions, made on purpose</h2>
+              <h2 className="display">Five decisions, made on purpose</h2>
             </div>
             <div className="decisions-grid">
               <div className="feature">
@@ -845,6 +946,15 @@ function ArchitecturePage() {
                 <p>
                   findNearbyReports is a real tool call Gemini chooses to make,
                   not a hard-coded step in the pipeline.
+                </p>
+              </div>
+              <div className="feature">
+                <h4>It calibrates in context, not by retraining</h4>
+                <p>
+                  Every ticket stores what Gemini originally said next to what
+                  the citizen filed. The five most recent disagreements go into
+                  the next prompt as few-shot examples — no fine-tuning pipeline
+                  exists.
                 </p>
               </div>
             </div>
