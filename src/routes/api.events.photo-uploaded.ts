@@ -35,7 +35,9 @@ async function handle({ request }: { request: Request }) {
 
   const match = /^reports\/([^/]+)\.jpg$/.exec(objectName)
   if (!match) {
-    console.error(`[events] photo-uploaded: unrecognized object name ${objectName}`)
+    console.error(
+      `[events] photo-uploaded: unrecognized object name ${objectName}`,
+    )
     return new Response('unrecognized object name', { status: 200 })
   }
   const draftId = match[1]
@@ -69,7 +71,10 @@ async function handle({ request }: { request: Request }) {
       })
     }
   } catch (error) {
-    console.error(`[events] photo-uploaded: pipeline failed for draft ${draftId}`, error)
+    console.error(
+      `[events] photo-uploaded: pipeline failed for draft ${draftId}`,
+      error,
+    )
     await markDraftError(
       draftId,
       error instanceof Error ? error.message : String(error),
