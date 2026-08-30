@@ -13,6 +13,9 @@ __unconfig*
 todos.json
 mcp-todos.json
 video/
+myvideo/
+promo-video/
+docs/
 
 # Claude Code project instructions — kept locally, not published
 CLAUDE.md
