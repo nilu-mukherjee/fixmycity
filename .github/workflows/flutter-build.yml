@@ -17,11 +17,6 @@ jobs:
     # workflow exists.
     runs-on: ubuntu-latest
 
-    # Needed to publish/update the `latest-apk` release below — the default
-    # GITHUB_TOKEN is otherwise read-only on a private repo.
-    permissions:
-      contents: write
-
     steps:
       - uses: actions/checkout@v4
 
@@ -115,21 +110,24 @@ jobs:
           path: android_app/build/app/outputs/flutter-apk/*.apk
           retention-days: 30
 
-      # A run artifact (above) requires GitHub auth just to reach the
-      # download button and lands as a zipped folder of every ABI split —
-      # not a one-click "Download Android app" link. A release asset is a
-      # stable URL that serves the raw .apk directly with a
-      # Content-Disposition: attachment header, so the site's download
-      # button (src/components/site-nav.tsx) can link straight to it. The
-      # `latest-apk` tag is reused/overwritten (`--clobber`) on every build
-      # so the link never changes.
-      - name: Publish latest-apk release
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - id: gcp-auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_APK_UPLOADER_KEY }}
+
+      # Uploads straight to the same GCS bucket the app already uses for
+      # photo storage (src/gcs/storage.ts) — a stable public URL that the
+      # site's download button (src/components/site-nav.tsx) links directly
+      # to. The object name is fixed and overwritten on every build so the
+      # link never changes; Content-Disposition: attachment is reapplied
+      # each time since `cp` doesn't preserve custom metadata across
+      # overwrites, and without it some browsers try to render the binary
+      # instead of downloading it.
+      - name: Upload APK to Cloud Storage
         run: |
-          gh release view latest-apk --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 \
-            || gh release create latest-apk --repo "$GITHUB_REPOSITORY" \
-                 --title "FixMyCity Android (latest build)" \
-                 --notes "Automatically rebuilt from the latest main branch commit. Not a versioned release — this tag is overwritten on every build."
-          gh release upload latest-apk --repo "$GITHUB_REPOSITORY" --clobber \
-            android_app/build/app/outputs/flutter-apk/*.apk
+          gcloud storage cp \
+            android_app/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk \
+            gs://fixmycity-506122-photos/builds/fixmycity-release-arm64.apk
+          gcloud storage objects update \
+            gs://fixmycity-506122-photos/builds/fixmycity-release-arm64.apk \
+            --content-disposition="attachment; filename=fixmycity.apk"

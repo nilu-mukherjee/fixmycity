@@ -1,14 +1,13 @@
 import { Link } from '@tanstack/react-router'
 
-// A GitHub Release asset (not the Actions run page) — a stable URL that
-// serves the .apk directly with Content-Disposition: attachment, so
-// clicking this actually force-downloads instead of landing on a workflow
-// list page. `latest-apk` is a rolling tag the build workflow overwrites on
-// every run (.github/workflows/flutter-build.yml) — arm64-v8a covers the
-// overwhelming majority of real Android phones (2017+); armeabi-v7a/x86_64
-// splits exist in the same release for legacy/emulator use if ever needed.
+// Served from the same GCS bucket the app already uses for photo storage
+// (src/gcs/storage.ts), not GitHub — a stable public URL with
+// Content-Disposition: attachment set on the object, so clicking this
+// force-downloads instead of landing on a GitHub Actions/release page.
+// arm64-v8a covers the overwhelming majority of real Android phones
+// (2017+).
 const APK_URL =
-  'https://github.com/nilu-mukherjee/fixmycity/releases/download/latest-apk/app-arm64-v8a-release.apk'
+  'https://storage.googleapis.com/fixmycity-506122-photos/builds/fixmycity-release-arm64.apk'
 
 /** Header used identically on every page — home, architecture, privacy, terms. */
 export function SiteNav() {
