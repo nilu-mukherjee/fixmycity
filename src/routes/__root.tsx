@@ -63,11 +63,17 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <head>
         <HeadContent />
       </head>
-      <body>
+      {/* Browser extensions (Grammarly, password managers) stamp attributes
+          onto <body> before React hydrates, which React reports as a
+          mismatch. Scoped to this element's own attributes — descendant
+          mismatches are still reported. */}
+      <body suppressHydrationWarning>
         {children}
         <TanStackDevtools
           config={{
             position: 'bottom-right',
+            defaultOpen: false,
+            hideUntilHover: true,
           }}
           plugins={[
             {
