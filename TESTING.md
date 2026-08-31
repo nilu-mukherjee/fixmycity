@@ -40,8 +40,8 @@ Requires an Android device or emulator, since the citizen app is a separate Flut
    ```
    DATABASE_URL=            # your Postgres connection string
    GEMINI_API_KEY=          # from Google AI Studio
-   BETTER_AUTH_URL=
-   BETTER_AUTH_SECRET=
+   BETTER_AUTH_URL=         # this deployment's base URL, e.g. http://localhost:3000
+   BETTER_AUTH_SECRET=      # random signing secret — generate with `openssl rand -base64 32`
    GOOGLE_CLIENT_ID=        # Google OAuth client (Web application type)
    GOOGLE_CLIENT_SECRET=
    ```

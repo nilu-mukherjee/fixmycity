@@ -50,6 +50,10 @@ Pipeline: citizen report → Genkit flow → Gemini Vision classification → th
    ```
    DATABASE_URL=            # your Postgres connection string
    GEMINI_API_KEY=          # from Google AI Studio
+   BETTER_AUTH_URL=         # this deployment's base URL, e.g. http://localhost:3000
+   BETTER_AUTH_SECRET=      # random signing secret — generate with `openssl rand -base64 32`
+   GOOGLE_CLIENT_ID=        # Google OAuth client (Web application type)
+   GOOGLE_CLIENT_SECRET=
    ```
 3. Push the schema to Postgres:
    ```bash
