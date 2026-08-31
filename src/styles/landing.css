@@ -944,8 +944,6 @@
 }
 .landing .arch-diagram {
   margin: 0;
-  background: var(--surface);
-  border: 1px solid var(--line);
   border-radius: 12px;
   box-shadow: var(--shadow);
   padding: 20px;
@@ -953,14 +951,16 @@
 .landing .arch-diagram-scroll {
   overflow-x: auto;
 }
-.landing .arch-diagram svg {
+.landing .arch-diagram svg,
+.landing .arch-diagram-embed {
   display: block;
   width: 100%;
   min-width: 720px;
   height: auto;
 }
 @media (min-width: 900px) {
-  .landing .arch-diagram svg {
+  .landing .arch-diagram svg,
+  .landing .arch-diagram-embed {
     min-width: 0;
   }
 }
@@ -1048,6 +1048,27 @@
 .landing .arch-prose {
   display: grid;
   gap: 32px;
+}
+.landing .arch-prose-grid {
+  grid-template-columns: repeat(2, 1fr);
+  column-gap: 48px;
+}
+.landing .arch-prose-grid > div:nth-last-child(-n + 2) {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+@media (max-width: 780px) {
+  .landing .arch-prose-grid {
+    grid-template-columns: 1fr;
+  }
+  .landing .arch-prose-grid > div:nth-last-child(-n + 2) {
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 32px;
+  }
+  .landing .arch-prose-grid > div:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
 }
 .landing .arch-prose > div {
   display: grid;
