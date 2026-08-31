@@ -306,11 +306,7 @@ function AdminConsole() {
         const cmp = compareBySortKey(sortColumn, a, b)
         return sortAsc ? cmp : -cmp
       }
-      const sevDiff =
-        SEVERITY_ORDER.indexOf(b.severity) - SEVERITY_ORDER.indexOf(a.severity)
-      return sevDiff !== 0
-        ? sevDiff
-        : b.createdAt.getTime() - a.createdAt.getTime()
+      return b.createdAt.getTime() - a.createdAt.getTime()
     })
   }, [tickets, statusFilter, severityFilter, sortColumn, sortAsc])
 
