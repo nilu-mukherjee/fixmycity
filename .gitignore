@@ -16,6 +16,8 @@ video/
 myvideo/
 promo-video/
 docs/
+blog/
+screenshots/
 
 # Claude Code project instructions — kept locally, not published
 CLAUDE.md

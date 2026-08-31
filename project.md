@@ -152,10 +152,12 @@ What's actually built and deployed, vs. still spec/aspiration above:
 - **Trust score** (clear image / exact location / nearby reports / recency, max 100) computed and shown to citizens.
 - **Duplicate detection** via haversine distance over same-category tickets (no PostGIS).
 - **Department routing** — mocked mapping, no real municipal integration (per spec).
-- **Admin dashboard** — TailAdmin-style UI, human-readable sequential ticket ids (FMC001, FMC002, ...), Google Maps link per ticket, real dates + month-over-month stats.
+- **Admin dashboard** — TailAdmin-style UI, human-readable sequential ticket ids (FMC001, FMC002, ...), Google Maps link per ticket, real dates + month-over-month stats, ticket list sorted by report time by default.
+- **Specific issue labels** — beyond the fixed category enum, Gemini also returns a short human-readable description of exactly what it sees (e.g. "Exposed Electrical Wiring on Pole" instead of a generic "electrical issue" bucket), stored as `Ticket.issueLabel`/`PresubmitDraft.issueLabel` and shown in the admin dashboard; a backfill script reclassifies pre-existing tickets that predate the field.
+- **Public `/architecture` page** — an animated diagram of the Cloud Run/Eventarc/Genkit pipeline, embedded alongside the rest of the public site nav/footer.
 - **Citizen Flutter app**: Google Sign-In (tickets scoped per citizen), camera-only capture (no gallery picker) with immediate auto-analyze on capture, a live on-device object-detection overlay (MediaPipe/TFLite) as a framing aid only, pinch-to-zoom, full-screen camera preview, reverse-geocoded full address shown instead of raw lat/lng, a public status-tracking page (received → verified → assigned → in progress → resolved), and friendly (non-raw-exception) error states throughout.
 - **Self-improvement feedback loop**: `Ticket` rows store Gemini's original category/severity/description suggestion (`aiCategory`/`aiSeverity`/`aiDescription`) alongside the citizen's final (possibly corrected) values. `getRecentCorrections` (`src/lib/tickets.ts`) surfaces the most recent mismatches, and `runReportPipeline` (`src/genkit/report-flow.ts`) folds them into the classification prompt as few-shot examples on every new report — the agent calibrates against its own past mistakes via in-context learning. This is not a fine-tuning/retraining pipeline; there isn't one, and nothing here changes the underlying model.
-- Release APKs are built, signed (real release keystore), and verified via GitHub Actions CI (the native object-detection dependency needs a real x86_64 build machine, which is why this isn't built locally).
+- Release APKs are built, signed (real release keystore), and verified via GitHub Actions CI (the native object-detection dependency needs a real x86_64 build machine, which is why this isn't built locally); the site's download button force-downloads the APK from Cloud Storage rather than linking to a GitHub Release/Actions page.
 
 **Not implemented (still just the spec above or the "What's next" list):**
 
@@ -199,11 +201,17 @@ In cities like Bengaluru, citizens often report potholes, garbage overflow, brok
 
 ## What it does
 
-FixMyCity AI allows citizens to report civic issues by uploading a photo, adding a short description, and sharing the location. The AI analyzes the report, identifies the issue category, estimates severity, detects possible duplicate complaints, and routes the ticket to the right department. It also gives citizens a simple tracking status so they know whether the issue is received, verified, assigned, in progress, or resolved.
+FixMyCity AI allows citizens to report civic issues by uploading a photo, adding a short description, and sharing the location. The AI analyzes the report, identifies the issue category and a specific, human-readable description of exactly what it sees (not just a generic bucket like "electrical issue" — something like "Exposed Electrical Wiring on Pole"), estimates severity, detects possible duplicate complaints, and routes the ticket to the right department. It also gives citizens a simple tracking status so they know whether the issue is received, verified, assigned, in progress, or resolved.
 
 ## How we built it
 
-We built the frontend using React, TypeScript, and Tailwind CSS for a clean and responsive user experience. The backend handles report creation, image upload, issue classification, duplicate detection, ticket status, and department routing. We used AI vision and language models to understand uploaded images and descriptions, then converted messy citizen reports into structured civic tickets. The dashboard helps admins view issues by category, severity, location, and status.
+The citizen-facing app is a separate Flutter mobile app — camera capture, GPS location, and an urgency note, no on-device detection. It talks to a TanStack Start backend (exposed over both raw RPC and OpenAPI) that hosts the actual agent pipeline.
+
+Classification runs as a Genkit flow calling Gemini 3.6 Flash on the uploaded photo. The interesting part: duplicate-detection isn't a step we hard-code in TypeScript and hand the model the result of — it's a tool (`findNearbyReports`) we give the model, and the model decides for itself whether to call it while reasoning about severity. The prompt tells it that multiple recent nearby reports of the same hazard should push its severity estimate up, not down, and we've seen this change real outcomes in testing: the same kind of report submitted somewhere with existing nearby reports of the same issue tends to come back with a higher severity than the identical input submitted somewhere isolated — the agent is genuinely incorporating retrieved context into its own judgment, not running a fixed sequence.
+
+Data and file storage run on Google Cloud — Postgres on Cloud SQL for tickets and presubmit drafts (via Prisma), and photos go straight to Cloud Storage. We started on Convex for its reactive queries, then pulled it out in favor of one GCP-native database, so the whole stack — including the Genkit flow itself — runs on Google Cloud with no third-party platform in the loop. The tradeoff: the admin dashboard no longer updates live off reactive queries; it polls every few seconds via TanStack Query instead. The backend deploys itself, too — Cloud Build redeploys both Cloud Run services on every push to main.
+
+A trust score (clear image, exact GPS accuracy, corroborating nearby reports, recency) is computed deterministically in code, not left to the LLM, so the scoring rubric stays auditable. Department routing is an explicit mocked lookup table, per the brief's constraint against real government integration.
 
 ## Challenges we ran into
 
